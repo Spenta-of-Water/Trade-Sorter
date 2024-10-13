@@ -50,7 +50,7 @@ public final class UIMaintenance extends IFullView {
         // Display top line messages
         section.addDown(0, new GText(UI.FONT().H2, "Overall Maintenance costs"));
         GText tableHeader = new GText(UI.FONT().S, "Resource per day         Costs if imported per day   Average value per day");
-        section.addDown(0, tableHeader);
+        section.addDown(10, tableHeader);
 
         // Create each row
         for (RESOURCE res : RESOURCES.ALL()) {
@@ -58,11 +58,12 @@ public final class UIMaintenance extends IFullView {
                 rows.add(new ResourceRow(res, tableHeader.width()));
             }
         }
+        GuiSection resultRow = new ResultRow(import_costs, value_costs);
 
         // Display the rows!
-        GScrollRows scrollRows = new GScrollRows(rows, HEIGHT / 4);
-        section.addDown(0, scrollRows.view());
-        section.addDown(5, new ResultRow(import_costs, value_costs));
+        GScrollRows scrollRows = new GScrollRows(rows, Math.min(HEIGHT - section.getLastY2() - resultRow.body().height(), rows.get(0).body().height() * rows.size()));
+        section.addDown(5, scrollRows.view());
+        section.addDown(5, resultRow);
 
     }
 
