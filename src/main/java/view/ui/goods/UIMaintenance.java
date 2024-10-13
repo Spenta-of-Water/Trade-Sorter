@@ -61,9 +61,21 @@ public final class UIMaintenance extends IFullView {
                 GuiSection resultRow = new ResultRow(import_costs, value_costs);
 
                 // Display the rows!
-                GScrollRows scrollRows = new GScrollRows(rows, Math.min(HEIGHT - section.getLastY2() - resultRow.body().height(), rows.get(0).body().height() * rows.size()));
+                GScrollRows scrollRows = new GScrollRows(rows, getHeightForElementToFill(section, resultRow, rows));
                 section.addDown(5, scrollRows.view());
                 section.addDown(5, resultRow);
+        }
+
+        private static int getHeightForElementToFill(GuiSection section, GuiSection finalElementToBeDisplayed, ArrayListGrower<EmiRow> rows){
+            int bottomPixelOfElementAboveUs = section.getLastY2();
+            int remainingScreenSpace = HEIGHT - bottomPixelOfElementAboveUs;
+            int pixelsWeCanNotUse = finalElementToBeDisplayed.body().height();
+
+            int maximumHeightElementInTheMiddleCouldTakeUp = remainingScreenSpace - pixelsWeCanNotUse;
+
+            int spaceWeActuallyNeed = rows.get(0).body().height() * rows.size();
+
+            return Math.min(maximumHeightElementInTheMiddleCouldTakeUp, spaceWeActuallyNeed);
         }
 
         private static class ResourceRow extends EmiRow {
