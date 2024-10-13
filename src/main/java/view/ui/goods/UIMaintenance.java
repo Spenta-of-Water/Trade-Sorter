@@ -73,6 +73,7 @@ public final class UIMaintenance extends IFullView {
 
             int maximumHeightElementInTheMiddleCouldTakeUp = remainingScreenSpace - pixelsWeCanNotUse;
 
+            // We assume all elements have the same height.
             int spaceWeActuallyNeed = rows.get(0).body().height() * rows.size();
 
             return Math.min(maximumHeightElementInTheMiddleCouldTakeUp, spaceWeActuallyNeed);
