@@ -1,16 +1,12 @@
 package view.ui.goods;
 
-import game.boosting.Boostable;
 import game.faction.FACTIONS;
-import init.sprite.SPRITES;
-import init.sprite.UI.Icon;
 import init.sprite.UI.UI;
 import init.text.D;
 import settlement.room.industry.module.INDUSTRY_HASER;
 import settlement.room.industry.module.Industry;
 import settlement.room.main.RoomBlueprint;
 import snake2d.util.gui.GuiSection;
-import snake2d.util.gui.renderable.RENDEROBJ;
 import snake2d.util.sets.ArrayListGrower;
 import util.gui.misc.GText;
 import util.gui.table.GScrollRows;
@@ -21,14 +17,7 @@ import static settlement.main.SETT.ROOMS;
 
 public final class UIValues extends IFullView {
 
-    private static final int COLS = 1;
-
-    public final Icon icon = SPRITES.icons().s.storage;
-    private static CharSequence ¤¤Name = "Values";
-
-    static {
-        D.ts(UIRecipes.class);
-    }
+    private static final CharSequence ¤¤Name = "Values";
 
     public UIValues() {
         super(¤¤Name, UI.icons().l.crate);
@@ -68,47 +57,35 @@ public final class UIValues extends IFullView {
 
 
 
-    private class RRow extends GuiSection {
+    private static class RRow extends GuiSection {
         private final int MARGIN = 4;
-        private final Industry ind;
-        private double tab;
+            private double tab;
 
         RRow(Industry i) {
             super();
-            ind = i;
             double goods_sell = 0;
             double goods_buy = 0;
-            double goods_va = 0;
-            double goods_sub = 0;
-            Boostable t = ind.bonus();
 
-
-            for (Industry.IndustryResource oo : ind.outs()) {
+            for (Industry.IndustryResource oo : i.outs()) {
                 goods_sell += oo.rate * FACTIONS.PRICE().get(oo.resource);
-                goods_sub += oo.rate * FACTIONS.PRICE().get(oo.resource);
             }
 
-            for (Industry.IndustryResource oo : ind.ins()) {
+            for (Industry.IndustryResource oo : i.ins()) {
                 goods_buy += oo.rate * FACTIONS.PRICE().get(oo.resource);
-                goods_va += oo.rate * FACTIONS.PRICE().get(oo.resource);
             }
 
             body().setWidth(WIDTH).setHeight(1);
             add(GFORMAT.f(new GText(UI.FONT().S, 7), goods_sell - goods_buy), incTab(2), MARGIN);
-            //add(GFORMAT.f(new GText(UI.FONT().S, 7), goods_sell - goods_va), incTab(2), MARGIN);
-            //add(GFORMAT.f(new GText(UI.FONT().S, 7), goods_sub), incTab(2), MARGIN);
+            add(i.blue.icon, incTab(1), 0);
 
-            add(ind.blue.icon, incTab(1), 0);
-            //addRight(margin, (GText) GFORMAT.text(new GText(UI.FONT().S, 0), ind.blue.key).adjustWidth());
-
-            for (Industry.IndustryResource oo : ind.outs()) {
+            for (Industry.IndustryResource oo : i.outs()) {
                 add(oo.resource.icon(), incTab(1), 0);
                 add(GFORMAT.f(new GText(UI.FONT().S, 0), oo.rate).adjustWidth(), incTab(1.5), MARGIN);
                 add(GFORMAT.text(new GText(UI.FONT().S, 0), "@").adjustWidth(), incTab(0.5), MARGIN);
                 add(GFORMAT.i(new GText(UI.FONT().S, 0), FACTIONS.PRICE().get(oo.resource)).adjustWidth(), incTab(1), MARGIN);
             }
 
-            for (Industry.IndustryResource oo : ind.ins()) {
+            for (Industry.IndustryResource oo : i.ins()) {
                 add(oo.resource.icon(), incTab(1), 0);
                 add(GFORMAT.f(new GText(UI.FONT().S, 0), -oo.rate).adjustWidth(), incTab(1.5), MARGIN);
                 add(GFORMAT.text(new GText(UI.FONT().S, 0), "@").adjustWidth(), incTab(0.5), MARGIN);

@@ -1,8 +1,6 @@
 package view.ui.goods;
 
 import game.faction.FACTIONS;
-import init.sprite.SPRITES;
-import init.sprite.UI.Icon;
 import init.sprite.UI.UI;
 import init.text.D;
 import settlement.main.SETT;
@@ -17,12 +15,7 @@ import init.resources.RESOURCES;
 
 public final class UIMaintenance extends IFullView {
 
-        public final Icon icon = SPRITES.icons().s.storage;
         private static CharSequence ¤¤Name = "Maintenance";
-
-        static {
-                D.ts(UIMaintenance.class);
-        }
 
         public UIMaintenance() {
             super(¤¤Name, UI.icons().l.crate);
@@ -33,19 +26,17 @@ public final class UIMaintenance extends IFullView {
                 section.clear();
                 section.body().moveY1(IFullView.TOP_HEIGHT);
                 section.body().moveX1(16);
-
                 section.body().setWidth(WIDTH).setHeight(1);
 
-
-                // Display the rows using the list of resources
-                ArrayListGrower<EmiRow> rows = new ArrayListGrower<>();
-                double import_costs = 0;
-                double value_costs = 0;
-                // Sum up the total first
-                for (RESOURCE res : RESOURCES.ALL()) {
-                        import_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.PRICE().get(res);
-                        value_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.player().trade.pricesBuy.get(res);
-                }
+                        // Display the rows using the list of resources
+                        ArrayListGrower<EmiRow> rows = new ArrayListGrower<>();
+                        double import_costs = 0;
+                        double value_costs = 0;
+                        // Sum up the total first
+                        for (RESOURCE res : RESOURCES.ALL()) {
+                                import_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.PRICE().get(res);
+                                value_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.player().trade.pricesBuy.get(res);
+                        }
 
                 // Display top line messages
                 section.addDown(0, new GText(UI.FONT().H2, "Overall Maintenance costs"));
