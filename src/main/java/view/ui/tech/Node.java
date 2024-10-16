@@ -229,33 +229,33 @@ final class Node extends GuiSection{
 						b.add(GFORMAT.iBig(b.text(), ct));
 					b.NL(4);
 
+					// Added UI elements to show info in hover box
+					b.sep();
+					knowledge_costs();
+					knowledge_benefits();
+					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "The number of knowledge workers to get this tech"));
+					b.NL();
+					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(costs * 10) /10, 1 ).color(GCOLOR.T().IGOOD));
+					b.NL();
 
+					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Research per worker:"));
+					b.NL();
+					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Laboratory"));b.tab(3);
+					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Library"));b.tab(6);
+					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Average"));
+					b.NL();
+					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_lab * 100) /100, 2 ).color(GCOLOR.T().IGOOD));b.tab(3);
+					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_lib * 100) /100, 2 ).color(GCOLOR.T().IGOOD));b.tab(6);
+					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_worker * 100) /100, 2 ).color(GCOLOR.T().IGOOD));
+					b.NL();
+					// End UI edits
 
 				}
 
 
 			}
 			b.sep();
-			// Added UI elements to show info in hover box
-			knowledge_costs();
-			knowledge_benefits();
-			b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "The number of knowledge workers to get this tech"));
-			b.NL();
-			b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(costs * 10) /10, 1 ).color(GCOLOR.T().IGOOD));
-			b.NL();
 
-			b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Research per worker:"));
-			b.NL();
-			b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Laboratory"));b.tab(3);
-			b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Library"));b.tab(6);
-			b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Average"));
-			b.NL();
-			b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_lab * 100) /100, 2 ).color(GCOLOR.T().IGOOD));b.tab(3);
-			b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_lib * 100) /100, 2 ).color(GCOLOR.T().IGOOD));b.tab(6);
-			b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_worker * 100) /100, 2 ).color(GCOLOR.T().IGOOD));
-			b.NL();
-			b.sep();
-			// End UI edits
 			{
 				LIST<TechRequirement> rr = tech.requires();
 
