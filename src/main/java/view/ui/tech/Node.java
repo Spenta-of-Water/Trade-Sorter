@@ -55,7 +55,41 @@ final class Node extends GuiSection{
 
 	private class Content extends ClickableAbs{
 
-
+		double know_lab = 0;
+		double know_lib = 0;
+		double costs;
+		double benefits;
+		double know_worker;
+		void knowledge_costs()
+		{
+			// Cost analysis
+			long know_tot = 0;
+			int know_emp = 0;
+			double know_tot2 = 0;
+			int know_emp2 = 0;
+			know_worker = 0;
+			int tech_cost = FACTIONS.player().tech.costOfNextWithRequired(tech);
+			// Add the knowledge laboratories and libraries create and divide by # of workers
+			// Creates know_worker, "knowledge created per worker"
+			for (ROOM_LABORATORY lab : ROOMS().LABORATORIES) {
+				know_tot += lab.knowledge();
+				know_emp += lab.employment().employed();
+			}
+			for (ROOM_LIBRARY libraries : ROOMS().LIBRARIES) {
+				know_tot2 += libraries.knowledge();
+				know_emp2 += libraries.employment().employed();
+			}
+			know_tot2 *= know_tot;
+			if (know_emp  != 0){ know_lab  = know_tot  / know_emp ;}
+			if (know_emp2 != 0){ know_lib  = know_tot2 / know_emp2;}
+			if ((know_emp + know_emp2)>0){ know_worker = (know_tot + know_tot2) / (know_emp + know_emp2);}
+			if (know_worker >=0){costs = tech_cost / know_worker;}else{costs = 0;}
+			// Cost analysis end
+		}
+		void knowledge_benefits()
+		{
+			benefits = 5;
+		}
 
 
 		Content(TECH tech){
@@ -74,31 +108,11 @@ final class Node extends GuiSection{
 			isSelected |= FACTIONS.player().tech.level(tech) > 0;
 
 			GCOLOR.T().H1.render(r, body);
-			double benefits = 80;
-			long know_tot = 0;
-			int know_emp = 0;
-			double know_tot2 = 0;
-			int know_emp2 = 0;
-			for (ROOM_LABORATORY lab : ROOMS().LABORATORIES) {
-				know_tot += lab.knowledge();
-				know_emp += lab.employment().employed();
-			}
-			for (ROOM_LIBRARY libraries : ROOMS().LIBRARIES) {
-				know_tot2 += libraries.knowledge();
-				know_emp2 += libraries.employment().employed();
-			}
-			know_tot2 *= know_tot;
-			double know_lab = 0;
-			double know_lib = 0;
-			if (know_emp  != 0){ know_lab  = know_tot  / know_emp ;}
-			if (know_emp2 != 0){ know_lib  = know_tot2 / know_emp2;}
-			double know_worker = (know_tot + know_tot2) / (know_emp + know_emp2);
-			int tech_cost = FACTIONS.player().tech.costOfNextWithRequired(tech);
-			double costs;
-			if (know_worker >=0){costs = tech_cost / know_worker;}else{costs = 0;}
-
 			GCOLOR.UI().bg(isActive, false, isHovered).render(r, body,-1);
-			COLOR col = col(isHovered, costs, benefits);
+
+			knowledge_costs();
+			knowledge_benefits();
+			COLOR col = col(isHovered, costs, benefits); // Color change function
 			col.render(r, body,-4);
 
 			GCOLOR.UI().bg(isActive, false, isHovered).render(r, body,-7);
@@ -140,7 +154,7 @@ final class Node extends GuiSection{
 
 
 		}
-
+		// Color change start
 		private COLOR col ( boolean hovered, double costs, double benefits){
 			double shade_val = hovered ? 1 : .6;
 			// If no knowledge workers or no calculated benefits, default to white
@@ -167,35 +181,12 @@ final class Node extends GuiSection{
 			}
 			return new ColorImp(127, 127, 127).shade(shade_val);
 		}
+		// Color change end
 
 		@Override
 		public void hoverInfoGet(GUI_BOX text) {
 			GBox b = (GBox) text;
 			text.title(tech.info.name);
-// Cost analysis
-			long know_tot = 0;
-			int know_emp = 0;
-			double know_tot2 = 0;
-			int know_emp2 = 0;
-			for (ROOM_LABORATORY lab : ROOMS().LABORATORIES) {
-				know_tot += lab.knowledge();
-				know_emp += lab.employment().employed();
-			}
-			for (ROOM_LIBRARY libraries : ROOMS().LIBRARIES) {
-				know_tot2 += libraries.knowledge();
-				know_emp2 += libraries.employment().employed();
-			}
-			know_tot2 *= know_tot;
-			double know_lab = 0;
-			double know_lib = 0;
-			if (know_emp  != 0){ know_lab  = know_tot  / know_emp ;}
-			if (know_emp2 != 0){ know_lib  = know_tot2 / know_emp2;}
-			double know_worker = (know_tot + know_tot2) / (know_emp + know_emp2);
-			int tech_cost = FACTIONS.player().tech.costOfNextWithRequired(tech);
-			double costs;
-			if (know_worker >=0){costs = tech_cost / know_worker;}else{costs = 0;}
-
-// End Cost analysis
 			PTech t = FACTIONS.player().tech();
 
 			{
@@ -245,30 +236,26 @@ final class Node extends GuiSection{
 
 			}
 			b.sep();
-
-			CharSequence ¤¤KnowledgeCost = "The number of knowledge workers to get this tech";
-			CharSequence ¤¤Labs = "Research per worker from Laboratories:";
-			CharSequence ¤¤Libs = "Research per worker from Libraries:";
-
-			b.textLL(¤¤KnowledgeCost);
+			// Added UI elements to show info in hover box
+			knowledge_costs();
+			knowledge_benefits();
+			b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "The number of knowledge workers to get this tech"));
+			b.NL();
+			b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(costs * 10) /10, 1 ).color(GCOLOR.T().IGOOD));
 			b.NL();
 
-			b.add(GFORMAT.f(new GText(UI.FONT().S, 0), costs));
+			b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Research per worker:"));
 			b.NL();
-
-			b.textLL(¤¤Labs);
+			b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Laboratory"));b.tab(3);
+			b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Library"));b.tab(6);
+			b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Average"));
 			b.NL();
-
-			b.add(GFORMAT.f(new GText(UI.FONT().S, 0), know_lab));
+			b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_lab * 100) /100, 2 ).color(GCOLOR.T().IGOOD));b.tab(3);
+			b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_lib * 100) /100, 2 ).color(GCOLOR.T().IGOOD));b.tab(6);
+			b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_worker * 100) /100, 2 ).color(GCOLOR.T().IGOOD));
 			b.NL();
-
-			b.textLL(¤¤Libs);
-			b.NL();
-
-			b.add(GFORMAT.f(new GText(UI.FONT().S, 0), know_lib));
-			b.NL();
-
 			b.sep();
+			// End UI edits
 			{
 				LIST<TechRequirement> rr = tech.requires();
 
