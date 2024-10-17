@@ -1,6 +1,6 @@
 package view.ui.tech;
 
-import game.boosting.BoostSpec;
+import game.boosting.*;
 import game.faction.FACTIONS;
 import game.faction.player.PTech;
 import init.sprite.SPRITES;
@@ -8,8 +8,17 @@ import init.sprite.UI.UI;
 import init.tech.TECH;
 import init.tech.TECH.TechRequirement;
 import init.text.D;
+import settlement.entity.humanoid.Humanoid;
+import settlement.main.SETT;
+import settlement.room.industry.module.INDUSTRY_HASER;
+import settlement.room.industry.module.Industry;
+import settlement.room.industry.module.ROOM_PRODUCER;
 import settlement.room.knowledge.laboratory.ROOM_LABORATORY;
 import settlement.room.knowledge.library.ROOM_LIBRARY;
+import settlement.room.main.RoomBlueprint;
+import settlement.room.main.RoomBlueprintIns;
+import settlement.room.main.RoomInstance;
+import settlement.stats.STATS;
 import snake2d.SPRITE_RENDERER;
 import snake2d.util.color.COLOR;
 import snake2d.util.color.ColorImp;
@@ -26,9 +35,13 @@ import view.keyboard.KEYS;
 import view.main.VIEW;
 
 import static settlement.main.SETT.ROOMS;
+import static settlement.room.industry.module.IndustryUtil.calcProductionRate;
 
-final class Node extends GuiSection{
+public final class Node extends GuiSection{
 
+	public static double know_worker;
+	public static double know_lab = 0;
+	public static double know_lib = 0;
 	public final static int WIDTH = 112;
 	public final static int HEIGHT = 112;
 	public static final COLOR Cdormant = COLOR.WHITE100.shade(0.3);
@@ -55,11 +68,10 @@ final class Node extends GuiSection{
 
 	private class Content extends ClickableAbs{
 
-		double know_lab = 0;
-		double know_lib = 0;
+
+
 		double costs;
 		double benefits;
-		double know_worker;
 		void knowledge_costs()
 		{
 			// Cost analysis
@@ -88,7 +100,82 @@ final class Node extends GuiSection{
 		}
 		void knowledge_benefits()
 		{
-			benefits = 5;
+
+		// For each tech, check each booster for additive bonus to KEY room type,
+		// for each room type that is RoomBlueprintIns and ROOM_PRODUCER,
+		// calculate the additive bonuses of each person of each room of each industry and add "v"
+		// v is the tech's benefit.
+		// boo.all().get(2).key; ==
+			benefits = 0;
+			LIST<BoostSpec> c = tech.boosters.all();
+			for (BoostSpec b : tech.boosters.all()) {
+				BoostSpec a = b;
+				double v = b.booster.to();
+				double z = b.booster.to()-b.booster.from();
+				CharSequence name = b.tName; //Bakeries Grain Farms
+				String d = b.boostable.key(); // ROOM_FARM_GRAIN
+				String e = b.boostable.key(); // ROOM_FARM_GRAIN
+
+				//Check each room
+//				for (RoomBlueprint h : ROOMS().all()) {
+//					// Only if they have an industry
+//
+//					BoostableCat boo = BOOSTABLES.ROOMS();
+//					CharSequence var_name = boo.all().get(2).name;
+//					CharSequence var_name2 = boo.all().get(2).desc;
+//					String var_name4 = boo.all().get(2).key;
+//					benefits = v * 1; // Bullshit line to get the breakpoint lower
+//					if (h instanceof INDUSTRY_HASER) {
+//					//for (r: h.all){
+//					//if (r instanceof ROOM_PRODUCER){
+//
+//						// Only if that industry has a 'recipe' that has outputs
+//						int out_num = 0;
+//						INDUSTRY_HASER ii = (INDUSTRY_HASER) h;
+//						for (Industry ins : ii.industries()) {
+//							if (ins.outs().isEmpty()){out_num += 0;}else{out_num +=1;}
+//						}
+//						if (out_num>0) {
+//							double emp = h.employment().employed();
+//							String hey = h.key(); //_WOODCUTTER
+//							String hay = h.key; //_WOODCUTTER
+//
+//						}
+//					//	}
+//					//}
+//					}
+//				}
+				// Ensure the key of b.boostable.key() == ind.bonus().key()
+				for (RoomBlueprint h : SETT.ROOMS().all()) { //We need SETT.ROOMS() to find the RoomInstance bonuses
+					if (h instanceof RoomBlueprintIns) { // Make sure it is a RoomBlueprintsIns
+						for (RoomInstance r : ((RoomBlueprintIns<?>) h).all()) { // For each workshop in the industry
+							if (r.employees() == null || !(r instanceof ROOM_PRODUCER)) { //make sure it is employed and a room producer
+								continue;
+							}
+							Industry ind = ((ROOM_PRODUCER) r).industry(); // Industry of the workshop
+							Boostable bonus = ind.bonus(); // The boosts of the industry
+							// if this industry isn't the same as the tech, keep going.
+							if (bonus == null) { continue; }
+							if (b.boostable.key() != bonus.key()){ continue; }
+							// Calculate the boosts by summing it up across all employees, IDK why we need to for additive ones... but this was used for both.
+							double add = 0;
+							int tot = 0;
+							for (Humanoid person : r.employees().employees()) { // for each person working
+								tot++; //adding up the number of employees
+								if (STATS.WORK().EMPLOYED.get(person) == r) { //IDK why this exists, copied from hoverBoosts function
+									for (Booster s : bonus.all()) { // look at all boosts an industry has
+										if (!s.isMul) { // add up the non-multiplier bonuses
+											add += s.get(person.indu());
+										}
+									}
+								}
+							}
+							add /= tot; // add is the total additive bonuses.
+							benefits += tot * v / (1+add); //Add the technology's benefit of each workshop
+						}
+					}
+				}
+			}
 		}
 
 
@@ -233,20 +320,13 @@ final class Node extends GuiSection{
 					b.sep();
 					knowledge_costs();
 					knowledge_benefits();
-					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "The number of knowledge workers to get this tech"));
+					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "The number of knowledge workers to get this tech."));
 					b.NL();
 					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(costs * 10) /10, 1 ).color(GCOLOR.T().IGOOD));
 					b.NL();
-
-					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Research per worker:"));
+					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "The number of workers worth of production this tech gives at current employment."));
 					b.NL();
-					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Laboratory"));b.tab(3);
-					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Library"));b.tab(6);
-					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Average"));
-					b.NL();
-					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_lab * 100) /100, 2 ).color(GCOLOR.T().IGOOD));b.tab(3);
-					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_lib * 100) /100, 2 ).color(GCOLOR.T().IGOOD));b.tab(6);
-					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_worker * 100) /100, 2 ).color(GCOLOR.T().IGOOD));
+					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), benefits, 1 ).color(GCOLOR.T().IGOOD));
 					b.NL();
 					// End UI edits
 
