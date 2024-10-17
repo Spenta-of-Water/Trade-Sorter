@@ -2,7 +2,8 @@ This mod is a collection of smaller mods made over time to provide more informat
 
 * Creating UI tabs uses a modification to IManager, here are all changes for that file:
 * All 3 ui.goods.X java files are created from scratch and wouldn't have any conflict with other mods, other than needing the IManager modifications
-view.ui.manage.IManager.java 
+view.ui.manage.IManager.java
+
 	1)
 	// Import the tabs code
 	import view.ui.goods.UIMaintenance;
@@ -37,6 +38,7 @@ view.ui.manage.IManager.java
 * The "Recipes" tab that helps determine if an industry is currently profitable to buy inputs (if any) and sell outputs to your current trade partners
 * This is to be used to determine if you should go into an industry, but better information is available if you're already in the industry.
 view.ui.goods.UIRecipes.java
+
 	1)
 	// Go through all rooms to find the ones that have an "industry." Either using goods or producing goods = INDUSTRY_HASER
 	// Then go through each industy to collect each recipe.
@@ -132,6 +134,7 @@ view.ui.goods.UIValues.java
 * 3 Calculate costs
 * 4 Calculate benefits (of select tech benefits)
 ui.tech.Node.java
+
 	1) 
 	// Add Cgood and Cbad for their shading colors -- to denote a technology being good or bad, brighten when hovered over as currently done
 	// May altar to make it a shade of red / green based on how close it is to being beneficial *in the moment*. 
