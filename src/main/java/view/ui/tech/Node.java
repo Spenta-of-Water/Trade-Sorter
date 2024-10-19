@@ -75,14 +75,13 @@ public final class Node extends GuiSection{
 		void knowledge_costs()
 		{
 			// Cost analysis
-			long know_tot = 0;
-			int know_emp = 0;
-			double know_tot2 = 0;
-			int know_emp2 = 0;
-			know_worker = 0;
-			int tech_cost = FACTIONS.player().tech.costOfNextWithRequired(tech);
-			// Add the knowledge laboratories and libraries create and divide by # of workers
-			// Creates know_worker, "knowledge created per worker"
+			long know_tot = 0;  	// Laboratory knowledge
+			int know_emp = 0;   	// laboratory employment
+			double know_tot2 = 0; 	// library knowledge
+			int know_emp2 = 0;	// library employment
+			know_worker = 0; 	// reset "knowledge per worker"
+			int tech_cost = FACTIONS.player().tech.costOfNextWithRequired(tech);	// knowledge cost for this tech
+			// Add knowledge generated and employment in each room for laboratories and libraries
 			for (ROOM_LABORATORY lab : ROOMS().LABORATORIES) {
 				know_tot += lab.knowledge();
 				know_emp += lab.employment().employed();
@@ -91,88 +90,45 @@ public final class Node extends GuiSection{
 				know_tot2 += libraries.knowledge();
 				know_emp2 += libraries.employment().employed();
 			}
-			know_tot2 *= know_tot;
-			if (know_emp  != 0){ know_lab  = know_tot  / know_emp ;}
-			if (know_emp2 != 0){ know_lib  = know_tot2 / know_emp2;}
-			if ((know_emp + know_emp2)>0){ know_worker = (know_tot + know_tot2) / (know_emp + know_emp2);}
-			if (know_worker >=0){costs = tech_cost / know_worker;}else{costs = 0;}
-			// Cost analysis end
+			know_tot2 *= know_tot; // libraries knowledge is a multiplier of laboratory knowledge
+			if (know_emp  != 0){ know_lab  = know_tot  / know_emp ;} // knowledge per laboratory worker
+			if (know_emp2 != 0){ know_lib  = know_tot2 / know_emp2;} // knowledge per library worker
+			if ((know_emp + know_emp2)>0){ know_worker = (know_tot + know_tot2) / (know_emp + know_emp2);} // knowledge per worker (both)
+			if (know_worker >=0){costs = tech_cost / know_worker;}else{costs = 0;} // workers needed for this tech's cost
 		}
 		void knowledge_benefits()
 		{
+			// Adds up the boost benefits for every boost in the tech, by industry, by room, per person.
+			benefits = 0; // reset benefit upon new tech
+			for (BoostSpec b : tech.boosters.all()) { // For all boosts of this tech,
+				for (RoomBlueprint h : SETT.ROOMS().all()) { // For each type of room blueprint    Note: We need SETT.ROOMS() to find the RoomInstance bonuses
+					if (  !(h instanceof RoomBlueprintIns)  ) { continue; } // Industries only
 
-		// For each tech, check each booster for additive bonus to KEY room type,
-		// for each room type that is RoomBlueprintIns and ROOM_PRODUCER,
-		// calculate the additive bonuses of each person of each room of each industry and add "v"
-		// v is the tech's benefit.
-		// boo.all().get(2).key; ==
-			benefits = 0;
-			LIST<BoostSpec> c = tech.boosters.all();
-			for (BoostSpec b : tech.boosters.all()) {
-				BoostSpec a = b;
-				double v = b.booster.to();
-				double z = b.booster.to()-b.booster.from();
-				CharSequence name = b.tName; //Bakeries Grain Farms
-				String d = b.boostable.key(); // ROOM_FARM_GRAIN
-				String e = b.boostable.key(); // ROOM_FARM_GRAIN
+					for (RoomInstance r : ((RoomBlueprintIns<?>) h).all()) { // For each workshop in the industry
 
-				//Check each room
-//				for (RoomBlueprint h : ROOMS().all()) {
-//					// Only if they have an industry
-//
-//					BoostableCat boo = BOOSTABLES.ROOMS();
-//					CharSequence var_name = boo.all().get(2).name;
-//					CharSequence var_name2 = boo.all().get(2).desc;
-//					String var_name4 = boo.all().get(2).key;
-//					benefits = v * 1; // Bullshit line to get the breakpoint lower
-//					if (h instanceof INDUSTRY_HASER) {
-//					//for (r: h.all){
-//					//if (r instanceof ROOM_PRODUCER){
-//
-//						// Only if that industry has a 'recipe' that has outputs
-//						int out_num = 0;
-//						INDUSTRY_HASER ii = (INDUSTRY_HASER) h;
-//						for (Industry ins : ii.industries()) {
-//							if (ins.outs().isEmpty()){out_num += 0;}else{out_num +=1;}
-//						}
-//						if (out_num>0) {
-//							double emp = h.employment().employed();
-//							String hey = h.key(); //_WOODCUTTER
-//							String hay = h.key; //_WOODCUTTER
-//
-//						}
-//					//	}
-//					//}
-//					}
-//				}
-				// Ensure the key of b.boostable.key() == ind.bonus().key()
-				for (RoomBlueprint h : SETT.ROOMS().all()) { //We need SETT.ROOMS() to find the RoomInstance bonuses
-					if (h instanceof RoomBlueprintIns) { // Make sure it is a RoomBlueprintsIns
-						for (RoomInstance r : ((RoomBlueprintIns<?>) h).all()) { // For each workshop in the industry
-							if (r.employees() == null || !(r instanceof ROOM_PRODUCER)) { //make sure it is employed and a room producer
-								continue;
-							}
-							Industry ind = ((ROOM_PRODUCER) r).industry(); // Industry of the workshop
-							Boostable bonus = ind.bonus(); // The boosts of the industry
-							// if this industry isn't the same as the tech, keep going.
-							if (bonus == null) { continue; }
-							if (b.boostable.key() != bonus.key()){ continue; }
-							// Calculate the boosts by summing it up across all employees, IDK why we need to for additive ones... but this was used for both.
-							double add = 0;
-							int tot = 0;
-							for (Humanoid person : r.employees().employees()) { // for each person working
-								tot++; //adding up the number of employees
-								if (STATS.WORK().EMPLOYED.get(person) == r) { //IDK why this exists, copied from hoverBoosts function
-									for (Booster s : bonus.all()) { // look at all boosts an industry has
-										if (!s.isMul) { // add up the non-multiplier bonuses
-											add += s.get(person.indu());
-										}
+						if (r.employees() == null || !(r instanceof ROOM_PRODUCER)) { continue; } // That has employees and produces goods
+
+						Industry ind = ((ROOM_PRODUCER) r).industry();  // Industry of the workshop
+						Boostable bonus = ind.bonus(); // The boosts of the industry
+
+						if (bonus == null || b.boostable.key() != bonus.key()) { continue; } // Boost exists in industry and matches the tech
+
+						// Calculate the boosts by summing it up across all employees
+						double add = 0;
+						int tot = 0;
+
+						for (Humanoid person : r.employees().employees()) { // for each person working
+							tot++; //adding up the number of employees
+							if (STATS.WORK().EMPLOYED.get(person) == r) { //IDK if this is needed, copied from hoverBoosts function
+								for (Booster s : bonus.all()) { // look at all boosts an industry has
+									if (!s.isMul) { // add up the non-multiplier bonuses
+										add += s.get(person.indu());
 									}
 								}
 							}
-							add /= tot; // add is the total additive bonuses.
-							benefits += tot * v / (1+add); //Add the technology's benefit of each workshop
 						}
+						add /= tot; // add is the total additive bonuses.
+						benefits += tot * b.booster.to() / (1+add); //Add the technology's benefit of each workshop
 					}
 				}
 			}
@@ -320,14 +276,22 @@ public final class Node extends GuiSection{
 					b.sep();
 					knowledge_costs();
 					knowledge_benefits();
+
+					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(costs * 10) /10, 1 ).color(GCOLOR.T().IGOOD));
 					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "The number of knowledge workers to get this tech."));
 					b.NL();
-					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(costs * 10) /10, 1 ).color(GCOLOR.T().IGOOD));
-					b.NL();
+
+					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), benefits, 1 ).color(GCOLOR.T().IGOOD));
 					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "The number of workers worth of production this tech gives at current employment."));
 					b.NL();
-					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), benefits, 1 ).color(GCOLOR.T().IGOOD));
-					b.NL();
+
+//					if (KEYS.MAIN().INFO.isPressed()){
+//
+//						b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(costs * 10) /10, 1 ).color(GCOLOR.T().IGOOD));
+//						b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "The number of knowledge workers to get this tech."));
+//						b.NL();
+//
+//					}
 					// End UI edits
 
 				}
