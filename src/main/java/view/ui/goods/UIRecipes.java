@@ -20,7 +20,7 @@ public final class UIRecipes extends IFullView {
     private final static CharSequence ¤¤Name = "Recipes";
 
     public UIRecipes() {
-        super(¤¤Name, UI.icons().l.crate);
+        super(¤¤Name, UI.icons().l.coin);
     }
 
     @Override

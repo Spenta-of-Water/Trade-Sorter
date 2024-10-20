@@ -286,9 +286,9 @@ public final class IManager {
         });
 
         // The icons being added to the main UI screen:
-        bAdd(s, i++, recipes, UI.icons().s.storage, null);
-        bAdd(s, i++, values, UI.icons().s.storage, null);
-        bAdd(s, i++, all_maintenance, UI.icons().s.storage, null);
+        bAdd(s, i++, recipes, UI.icons().s.money, null);
+        bAdd(s, i++, values, UI.icons().s.money, null);
+        bAdd(s, i++, all_maintenance, UI.icons().s.degrade, null);
 
         {
             GuiSection ss = new GuiSection();

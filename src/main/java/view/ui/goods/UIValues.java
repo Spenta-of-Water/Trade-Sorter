@@ -20,7 +20,7 @@ public final class UIValues extends IFullView {
     private static final CharSequence ¤¤Name = "Values";
 
     public UIValues() {
-        super(¤¤Name, UI.icons().l.crate);
+        super(¤¤Name, UI.icons().l.coin);
     }
 
     @Override

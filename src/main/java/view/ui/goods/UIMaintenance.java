@@ -1,6 +1,7 @@
 package view.ui.goods;
 
 import game.faction.FACTIONS;
+import init.sprite.SPRITES;
 import init.sprite.UI.UI;
 import init.text.D;
 import settlement.main.SETT;
@@ -18,7 +19,7 @@ public final class UIMaintenance extends IFullView {
         private static CharSequence ¤¤Name = "Maintenance";
 
         public UIMaintenance() {
-            super(¤¤Name, UI.icons().l.crate);
+            super(¤¤Name, SPRITES.icons().l.workshop);
         }
 
         @Override
