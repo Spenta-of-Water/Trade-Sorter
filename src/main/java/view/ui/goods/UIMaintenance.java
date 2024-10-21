@@ -17,7 +17,7 @@ import init.resources.RESOURCES;
 public final class UIMaintenance extends IFullView {
 
         private static CharSequence ¤¤Name = "Maintenance";
-
+        public static double import_costs = 0;
         public UIMaintenance() {
             super(¤¤Name, SPRITES.icons().l.workshop);
         }
@@ -31,7 +31,6 @@ public final class UIMaintenance extends IFullView {
 
                         // Display the rows using the list of resources
                         ArrayListGrower<EmiRow> rows = new ArrayListGrower<>();
-                        double import_costs = 0;
                         double value_costs = 0;
                         // Sum up the total first
                         for (RESOURCE res : RESOURCES.ALL()) {

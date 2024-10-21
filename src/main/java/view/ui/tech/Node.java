@@ -3,6 +3,8 @@ package view.ui.tech;
 import game.boosting.*;
 import game.faction.FACTIONS;
 import game.faction.player.PTech;
+import game.time.TIME;
+import init.resources.RESOURCE;
 import init.sprite.SPRITES;
 import init.sprite.UI.UI;
 import init.tech.TECH;
@@ -10,6 +12,7 @@ import init.tech.TECH.TechRequirement;
 import init.text.D;
 import settlement.entity.humanoid.Humanoid;
 import settlement.main.SETT;
+import settlement.maintenance.ROOM_DEGRADER;
 import settlement.room.industry.module.INDUSTRY_HASER;
 import settlement.room.industry.module.Industry;
 import settlement.room.industry.module.ROOM_PRODUCER;
@@ -18,6 +21,9 @@ import settlement.room.knowledge.library.ROOM_LIBRARY;
 import settlement.room.main.RoomBlueprint;
 import settlement.room.main.RoomBlueprintIns;
 import settlement.room.main.RoomInstance;
+import settlement.room.main.employment.RoomEmploymentIns;
+import settlement.room.main.employment.RoomEmploymentSimple;
+import settlement.room.main.employment.RoomEquip;
 import settlement.stats.STATS;
 import snake2d.SPRITE_RENDERER;
 import snake2d.util.color.COLOR;
@@ -34,14 +40,32 @@ import util.info.GFORMAT;
 import view.keyboard.KEYS;
 import view.main.VIEW;
 
+import java.util.Objects;
+
 import static settlement.main.SETT.ROOMS;
 import static settlement.room.industry.module.IndustryUtil.calcProductionRate;
+import static view.ui.goods.UIMaintenance.import_costs;
 
 public final class Node extends GuiSection{
 
-	public static double know_worker;
-	public static double know_lab = 0;
-	public static double know_lib = 0;
+	public static double know_worker;  	// knowledge per worker (average)
+
+	public static double know_lab = 0; 	// knowledge per laboratory worker
+	public static double know_lib = 0; 	// knowledge per library worker
+
+	public static double benefit_maint = 0;	// Maintenance per worker for the benefitting industries
+	public static double cost_maint = 0;	// Maintenance per worker for the knowledge buildings
+
+	public static double benefit_tools = 0; // tool cost per person for benefited industry buildings
+	public static double cost_tools = 0;    // tool cost per person for knowledge buildings
+
+	public static double cost_inputs = 0;    // paper cost per knowledge worker
+	public static double cost_education = 0; // Cost of all schools and universities, including paper, tools, maintenance
+
+
+	public static int know_emp = 0 ; 	// laboratory employment
+	public static int know_emp2 = 0 ;	// library  employment
+
 	public final static int WIDTH = 112;
 	public final static int HEIGHT = 112;
 	public static final COLOR Cdormant = COLOR.WHITE100.shade(0.3);
@@ -74,11 +98,12 @@ public final class Node extends GuiSection{
 		double benefits;
 		void knowledge_costs()
 		{
+		// Knowledge per worker
+			know_emp = 0 ; 	// laboratory employment
+			know_emp2 = 0 ;	// library  employment
 			// Cost analysis
 			long know_tot = 0;  	// Laboratory knowledge
-			int know_emp = 0;   	// laboratory employment
 			double know_tot2 = 0; 	// library knowledge
-			int know_emp2 = 0;	// library employment
 			know_worker = 0; 	// reset "knowledge per worker"
 			int tech_cost = FACTIONS.player().tech.costOfNextWithRequired(tech);	// knowledge cost for this tech
 			// Add knowledge generated and employment in each room for laboratories and libraries
@@ -95,12 +120,68 @@ public final class Node extends GuiSection{
 			if (know_emp2 != 0){ know_lib  = know_tot2 / know_emp2;} // knowledge per library worker
 			if ((know_emp + know_emp2)>0){ know_worker = (know_tot + know_tot2) / (know_emp + know_emp2);} // knowledge per worker (both)
 			if (know_worker >=0){costs = tech_cost / know_worker;}else{costs = 0;} // workers needed for this tech's cost
-		}
+
+
+		// MAINTENANCE + TOOLS costs
+			cost_maint = 0;
+			cost_tools = 0;
+			double cost_maint_total = 0;
+			double cost_emp_total = 0;
+			for (RoomBlueprint h : SETT.ROOMS().all()) {
+				if (Objects.equals(h.key, "LABORATORY_NORMAL") || h.key == "LIBRARY_NORMAL") {
+					for (RoomInstance r : ((RoomBlueprintIns<?>) h).all()) {
+						if (r.employees() == null) { continue; } // That has employees
+
+						// TOOLS
+						RoomEmploymentSimple ee = r.blueprint().employment();
+						RoomEmploymentIns e = r.employees();
+
+						for (RoomEquip w : ee.tools()) {
+							double n = w.degradePerDay * e.tools(w);
+							double sellFor = FACTIONS.player().trade.pricesBuy.get(w.resource);
+							cost_tools -= n * sellFor;
+						}
+
+
+
+						// MAINTENANCE
+						ROOM_DEGRADER deg = r.degrader(r.mX(), r.mY());
+						double iso = r.isolation(r.mX(), r.mY());
+						double boost = SETT.MAINTENANCE().speed();
+						double total_room_maintenance_import = 0;
+
+						if (deg == null) { continue; }
+						for (int i = 0; i < deg.resSize(); i++) {
+							if (deg.resAmount(i) <= 0)
+								continue;
+							RESOURCE res = deg.res(i);
+
+							double n = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, deg.resAmount(i)) * TIME.years().bitConversion(TIME.days()) / 16.0;
+							double sellFor = FACTIONS.player().trade.pricesBuy.get(res);
+							total_room_maintenance_import -= n * sellFor;
+						}
+						cost_maint_total += total_room_maintenance_import; // Add for each room
+						cost_emp_total += r.employees().employed();
+					}
+				}
+			}
+			if (cost_emp_total >0) { cost_maint = cost_maint_total / cost_emp_total; }
+			if (cost_emp_total >0) { cost_tools = cost_tools / cost_emp_total; }
+
+
+			}
 		void knowledge_benefits()
 		{
 			// Adds up the boost benefits for every boost in the tech, by industry, by room, per person.
 			benefits = 0; // reset benefit upon new tech
+			benefit_maint = 0;
+			benefit_tools = 0;
+
+			double benefit_maint_total = 0;
+			double benefit_emp_total = 0;
+
 			for (BoostSpec b : tech.boosters.all()) { // For all boosts of this tech,
+
 				for (RoomBlueprint h : SETT.ROOMS().all()) { // For each type of room blueprint    Note: We need SETT.ROOMS() to find the RoomInstance bonuses
 					if (  !(h instanceof RoomBlueprintIns)  ) { continue; } // Industries only
 
@@ -113,7 +194,7 @@ public final class Node extends GuiSection{
 
 						if (bonus == null || b.boostable.key() != bonus.key()) { continue; } // Boost exists in industry and matches the tech
 
-						// Calculate the boosts by summing it up across all employees
+						// BOOSTS BENEFITS
 						double add = 0;
 						int tot = 0;
 
@@ -129,9 +210,45 @@ public final class Node extends GuiSection{
 						}
 						add /= tot; // add is the total additive bonuses.
 						benefits += tot * b.booster.to() / (1+add); //Add the technology's benefit of each workshop
+
+
+						// TOOLS COSTS
+						RoomEmploymentSimple ee = r.blueprint().employment();
+						RoomEmploymentIns e = r.employees();
+
+						for (RoomEquip w : ee.tools()) {
+							double n = w.degradePerDay * e.tools(w);
+							double sellFor = FACTIONS.player().trade.pricesBuy.get(w.resource);
+							benefit_tools -= n * sellFor;
+						}
+						benefit_emp_total += r.employees().employed(); // Employee count used for tools and maintenance
+
+
+						// MAINTENANCE COSTS
+						ROOM_DEGRADER deg = r.degrader(r.mX(), r.mY());
+						double iso = r.isolation(r.mX(), r.mY());
+						double boost = SETT.MAINTENANCE().speed();
+
+						double total_room_maintenance_import = 0;
+						if (deg == null){ continue; }
+						for (int i = 0; i < deg.resSize(); i++) {
+							if (deg.resAmount(i) <= 0)
+								continue;
+							RESOURCE res = deg.res(i);
+
+							double n = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, deg.resAmount(i))* TIME.years().bitConversion(TIME.days()) / 16.0;
+							double sellFor = FACTIONS.player().trade.pricesBuy.get(res);
+							total_room_maintenance_import -= n * sellFor;
+						}
+						benefit_maint_total += total_room_maintenance_import; // Add for each room
+
 					}
 				}
 			}
+			if (benefit_emp_total >0) { benefit_tools = benefit_tools / benefit_emp_total; }
+			if (benefit_emp_total >0) { benefit_maint = benefit_maint_total / benefit_emp_total; }
+
+
 		}
 
 
@@ -281,17 +398,48 @@ public final class Node extends GuiSection{
 					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "The number of knowledge workers to get this tech."));
 					b.NL();
 
-					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), benefits, 1 ).color(GCOLOR.T().IGOOD));
-					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "The number of workers worth of production this tech gives at current employment."));
-					b.NL();
+					if (benefits > 0) {
+						b.add(GFORMAT.f(new GText(UI.FONT().S, 0), benefits, 1).color(GCOLOR.T().IGOOD));
+						b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "The number of workers worth of production this tech gives at current employment."));
+						b.NL();
+					}
 
-//					if (KEYS.MAIN().INFO.isPressed()){
-//
-//						b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(costs * 10) /10, 1 ).color(GCOLOR.T().IGOOD));
-//						b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "The number of knowledge workers to get this tech."));
-//						b.NL();
-//
-//					}
+					if (KEYS.MAIN().INFO.isPressed()){
+						for (BoostSpec bb : tech.boosters.all()) {
+							// key = "CIVIC_MAINTENANCE"
+							// key = "CIVIC_SPOILAGE"
+							if (Objects.equals(bb.boostable.key(), "CIVIC_MAINTENANCE")){
+								double v = bb.booster.to(); 	// benefit per level of tech
+								if (bb.booster.isMul)       	// multipliers are 1.1 so remove the 1 to modify per level
+									v -= 1;
+								double w = (t.level(tech)+1)* v;// W = v+1 level
+								v*=t.level(tech);		// multiply level * benefit
+								if (bb.booster.isMul) {         // undo original change if multiplier
+									v += 1;
+									w += 1;
+								}
+								b.sep();
+								b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(import_costs * 10) /10, 1 ).color(GCOLOR.T().IBAD));
+								b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Import cost of all maintenance"));
+								b.NL();
+							}
+						}
+						b.sep();
+						b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(cost_maint * 10) /10, 1 ).color(GCOLOR.T().IBAD));
+						b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Average maintenance costs per knowledge worker"));
+						b.NL();
+						b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(cost_tools * 10) /10, 1 ).color(GCOLOR.T().IBAD));
+						b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Average tool costs per knowledge worker"));
+						b.NL();
+						b.sep();
+						b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(benefit_maint * 10) /10, 1 ).color(GCOLOR.T().IBAD));
+						b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Average maintenance costs for production per worker"));
+						b.NL();
+						b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(benefit_tools * 10) /10, 1 ).color(GCOLOR.T().IBAD));
+						b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Average tool costs per boosted industry worker"));
+						b.NL();
+
+					}
 					// End UI edits
 
 				}
@@ -350,7 +498,6 @@ public final class Node extends GuiSection{
 					b.tab(9);
 					b.textLL(Dic.¤¤Next);
 					b.NL();
-
 
 					for (BoostSpec bb : tech.boosters.all()) {
 						b.add(bb.boostable.icon);

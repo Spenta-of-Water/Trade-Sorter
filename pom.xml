@@ -100,9 +100,13 @@
         <!-- These settings will go into the mods _Info.txt file -->
         <mod.version>${project.version}</mod.version>
         <mod.name>Extra Info</mod.name>
-        <mod.description>Gives Extra Info</mod.description>
+        <mod.description>Gives Extra Info in the UI</mod.description>
         <mod.author>EmiTheWitch and Mialbowy</mod.author>
-        <mod.info>Gives Extra Info</mod.info>
+        <mod.info>Adds multiple UI pages and GUI additions to help determine overall maintenance costs, the most profitable industry, how profitable each room is if you were to import inputs and export outputs, show the cost of maintenance by their import prices, calculate the knowledge per laboratory or library worker, determine the effectiveness of production labor bonuses (only for now).
+
+            To access some of the extra info, you need to push the `Extra Info` button in the technology panel (gives you the average maintenance and tool cost for labs/libraries and the boosted industries buildings per worker). The default keyboard command is `Left shift.`
+
+            It's... a lot of changes, but I'm far from done, and that's why I've hesitated to release this until now. If you have any suggestions for what information to add, or how to value other technologies, let me know! If you think I miscalculated something, constructively complain please! </mod.info>
         <game.version.major>67</game.version.major>
         <game.version.minor>41</game.version.minor>
 
