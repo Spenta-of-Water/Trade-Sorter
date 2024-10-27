@@ -5,6 +5,7 @@ import game.faction.FACTIONS;
 import game.faction.player.PTech;
 import game.time.TIME;
 import init.resources.RESOURCE;
+import init.resources.RESOURCES;
 import init.sprite.SPRITES;
 import init.sprite.UI.UI;
 import init.tech.TECH;
@@ -404,11 +405,15 @@ public final class Node extends GuiSection{
 						b.NL();
 					}
 
-					if (KEYS.MAIN().INFO.isPressed()){
+					if (KEYS.MAIN().UNDO.isPressed()){
 						for (BoostSpec bb : tech.boosters.all()) {
 							// key = "CIVIC_MAINTENANCE"
 							// key = "CIVIC_SPOILAGE"
 							if (Objects.equals(bb.boostable.key(), "CIVIC_MAINTENANCE")){
+								double import_costs = 0;
+								for (RESOURCE res : RESOURCES.ALL()) {
+									import_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.player().trade.pricesBuy.get(res);
+								}
 								double v = bb.booster.to(); 	// benefit per level of tech
 								if (bb.booster.isMul)       	// multipliers are 1.1 so remove the 1 to modify per level
 									v -= 1;
