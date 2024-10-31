@@ -13,7 +13,7 @@
             <id>windows</id>
             <properties>
                 <game.mod.directory>${user.home}/AppData/Roaming/songsofsyx/mods</game.mod.directory>
-                <game.install.directory>C:/Emi/Games/steamapps/common/Songs of Syx</game.install.directory>
+                <game.install.directory>C:/Emi/Project Fun/Songs of Syx/V67</game.install.directory>
                 <game.mod.uploader.directory>${user.home}/AppData/Roaming/songsofsyx/mods-uploader</game.mod.uploader.directory>
             </properties>
             <activation>
@@ -26,7 +26,7 @@
             <id>linux</id>
             <properties>
                 <game.mod.directory>${user.home}/.local/share/songsofsyx/mods</game.mod.directory>
-                <game.install.directory>C:/Emi/Games/steamapps/common/Songs of Syx</game.install.directory>
+                <game.install.directory>C:/Emi/Project Fun/Songs of Syx/V67</game.install.directory>
                 <game.mod.uploader.directory>${user.home}/.local/share/songsofsyx/mods-uploader</game.mod.uploader.directory>
             </properties>
             <activation>
@@ -100,15 +100,11 @@
         <!-- These settings will go into the mods _Info.txt file -->
         <mod.version>${project.version}</mod.version>
         <mod.name>Extra Info</mod.name>
-        <mod.description>Gives Extra Info in the UI</mod.description>
+        <mod.description>Adds multiple UI changes to give more decision-making information.</mod.description>
         <mod.author>EmiTheWitch and Mialbowy</mod.author>
-        <mod.info>Adds multiple UI pages and GUI additions to help determine overall maintenance costs, the most profitable industry, how profitable each room is if you were to import inputs and export outputs, show the cost of maintenance by their import prices, calculate the knowledge per laboratory or library worker, determine the effectiveness of production labor bonuses (only for now).
-
-            To access some of the extra info, you need to push the `Extra Info` button in the technology panel (gives you the average maintenance and tool cost for labs/libraries and the boosted industries buildings per worker). The default keyboard command is `Left shift.`
-
-            It's... a lot of changes, but I'm far from done, and that's why I've hesitated to release this until now. If you have any suggestions for what information to add, or how to value other technologies, let me know! If you think I miscalculated something, constructively complain please! </mod.info>
+        <mod.info> </mod.info>
         <game.version.major>67</game.version.major>
-        <game.version.minor>41</game.version.minor>
+        <game.version.minor>48</game.version.minor>
 
         <!-- Build settings -->
         <game.version.directory>V${game.version.major}</game.version.directory>

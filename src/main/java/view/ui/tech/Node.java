@@ -14,7 +14,6 @@ import init.text.D;
 import settlement.entity.humanoid.Humanoid;
 import settlement.main.SETT;
 import settlement.maintenance.ROOM_DEGRADER;
-import settlement.room.industry.module.INDUSTRY_HASER;
 import settlement.room.industry.module.Industry;
 import settlement.room.industry.module.ROOM_PRODUCER;
 import settlement.room.knowledge.laboratory.ROOM_LABORATORY;
@@ -22,6 +21,7 @@ import settlement.room.knowledge.library.ROOM_LIBRARY;
 import settlement.room.main.RoomBlueprint;
 import settlement.room.main.RoomBlueprintIns;
 import settlement.room.main.RoomInstance;
+import settlement.room.main.RoomProduction;
 import settlement.room.main.employment.RoomEmploymentIns;
 import settlement.room.main.employment.RoomEmploymentSimple;
 import settlement.room.main.employment.RoomEquip;
@@ -45,7 +45,6 @@ import java.util.Objects;
 
 import static settlement.main.SETT.ROOMS;
 import static settlement.room.industry.module.IndustryUtil.calcProductionRate;
-import static view.ui.goods.UIMaintenance.import_costs;
 
 public final class Node extends GuiSection{
 
@@ -53,6 +52,9 @@ public final class Node extends GuiSection{
 
 	public static double know_lab = 0; 	// knowledge per laboratory worker
 	public static double know_lib = 0; 	// knowledge per library worker
+
+	public static double benefit_tot = 0; 	// total benefits cost (tools + maint atm)
+	public static double cost_tot = 0; 	// total costs cost (tools + maint atm)
 
 	public static double benefit_maint = 0;	// Maintenance per worker for the benefitting industries
 	public static double cost_maint = 0;	// Maintenance per worker for the knowledge buildings
@@ -97,6 +99,7 @@ public final class Node extends GuiSection{
 
 		double costs;
 		double benefits;
+
 		void knowledge_costs()
 		{
 		// Knowledge per worker
@@ -128,7 +131,7 @@ public final class Node extends GuiSection{
 			cost_tools = 0;
 			double cost_maint_total = 0;
 			double cost_emp_total = 0;
-			for (RoomBlueprint h : SETT.ROOMS().all()) {
+			for (RoomBlueprint h : ROOMS().all()) {
 				if (Objects.equals(h.key, "LABORATORY_NORMAL") || h.key == "LIBRARY_NORMAL") {
 					for (RoomInstance r : ((RoomBlueprintIns<?>) h).all()) {
 						if (r.employees() == null) { continue; } // That has employees
@@ -168,9 +171,9 @@ public final class Node extends GuiSection{
 			}
 			if (cost_emp_total >0) { cost_maint = cost_maint_total / cost_emp_total; }
 			if (cost_emp_total >0) { cost_tools = cost_tools / cost_emp_total; }
+			cost_tot = cost_maint + cost_tools;
 
-
-			}
+		}
 		void knowledge_benefits()
 		{
 			// Adds up the boost benefits for every boost in the tech, by industry, by room, per person.
@@ -183,7 +186,7 @@ public final class Node extends GuiSection{
 
 			for (BoostSpec b : tech.boosters.all()) { // For all boosts of this tech,
 
-				for (RoomBlueprint h : SETT.ROOMS().all()) { // For each type of room blueprint    Note: We need SETT.ROOMS() to find the RoomInstance bonuses
+				for (RoomBlueprint h : ROOMS().all()) { // For each type of room blueprint    Note: We need SETT.ROOMS() to find the RoomInstance bonuses
 					if (  !(h instanceof RoomBlueprintIns)  ) { continue; } // Industries only
 
 					for (RoomInstance r : ((RoomBlueprintIns<?>) h).all()) { // For each workshop in the industry
@@ -248,10 +251,68 @@ public final class Node extends GuiSection{
 			}
 			if (benefit_emp_total >0) { benefit_tools = benefit_tools / benefit_emp_total; }
 			if (benefit_emp_total >0) { benefit_maint = benefit_maint_total / benefit_emp_total; }
-
+			benefit_tot = benefit_tools + benefit_maint;
 
 		}
 
+		private double resource_use(String Source) {
+			double tot = 0;
+			for (RESOURCE res : RESOURCES.ALL()) {
+				for (RoomProduction.Source rr : SETT.ROOMS().PROD.consumers(res)) {
+					if (Objects.equals(rr.name(), Source)){
+						if (rr.am() == 0) {continue;}
+						// import price
+						// FACTIONS.player().trade.pricesBuy.get(res)
+						// resource "value" (average value to factions across the world)
+						// FACTIONS.PRICE().get(res)
+						tot -= rr.am() * FACTIONS.PRICE().get(res) ;
+					}
+				}
+			}
+			return tot;
+		}
+		private double next_tech_benefit(BoostSpec bb){
+			PTech t = FACTIONS.player().tech();
+			double v = bb.booster.to(); 	// benefit per level of tech
+			double w = v * (t.level(tech)+1);// W = the *next* level's benefit
+			v*=t.level(tech);		//  V = this level's benefit
+			// Maintenance and Spoilage tech use the following formula:
+			// 1 / ( 1 + v)
+			// So to find out the decrease *relative to current maintenance* (above formula)
+			// New maintenance / old maintenance = e.g. 90%, so 1-.9= .1 is the decrease, * 100 for 10%
+			return 100 * (1 - (  1 / (1 + w) ) / (  1 / (1 + v) )) ;
+		}
+		private double tech_divisor_presentation(String what, double denari_costs, BoostSpec bb, GBox b) {
+			double tech_benefit = next_tech_benefit(bb); // % of maintenance you'll still have, e.g. 20% reduction from current tech level
+			b.sep();
+			if (Objects.equals(what, "spoilage")){
+				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Note: Spoilage estimates assume spoilage was in a hauler or warehouse"));
+				b.NL();
+			}
+			if (KEYS.MAIN().UNDO.isPressed()) {
+				b.add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) Math.ceil(denari_costs)));
+				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "$"));   b.tab(2);
+				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Cost of all ".concat(what)));
+				b.NL();
+				b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(tech_benefit * 100) / 100, 2).color(GCOLOR.T().IGOOD));
+				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "%"));   b.tab(2);
+				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Percent reduction from this tech"));
+				b.NL();
+				b.add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) Math.ceil(-denari_costs * tech_benefit/100)));
+				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "$"));   b.tab(2);
+				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Estimated ".concat(what).concat(" cost reduction from this tech")));
+				b.NL();
+				b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(100 * cost_tot * costs) / 100, 2).color(GCOLOR.T().IBAD));
+				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "$"));   b.tab(2);
+				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Cost of knowledge workers that work on this tech"));
+				b.NL();
+				b.add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long)  ( ( -denari_costs * tech_benefit/100 + cost_tot * costs) / costs ) ) );
+				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "$"));   b.tab(2);
+				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Estimated denari cost reduction per knowledge worker from this tech"));
+				b.NL();
+			}
+			return -denari_costs * tech_benefit/100;
+		}
 
 		Content(TECH tech){
 			body.setDim(88, 88);
@@ -405,45 +466,56 @@ public final class Node extends GuiSection{
 						b.NL();
 					}
 
-					if (KEYS.MAIN().UNDO.isPressed()){
-						for (BoostSpec bb : tech.boosters.all()) {
-							// key = "CIVIC_MAINTENANCE"
-							// key = "CIVIC_SPOILAGE"
-							if (Objects.equals(bb.boostable.key(), "CIVIC_MAINTENANCE")){
-								double import_costs = 0;
-								for (RESOURCE res : RESOURCES.ALL()) {
-									import_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.player().trade.pricesBuy.get(res);
-								}
-								double v = bb.booster.to(); 	// benefit per level of tech
-								if (bb.booster.isMul)       	// multipliers are 1.1 so remove the 1 to modify per level
-									v -= 1;
-								double w = (t.level(tech)+1)* v;// W = v+1 level
-								v*=t.level(tech);		// multiply level * benefit
-								if (bb.booster.isMul) {         // undo original change if multiplier
-									v += 1;
-									w += 1;
-								}
-								b.sep();
-								b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(import_costs * 10) /10, 1 ).color(GCOLOR.T().IBAD));
-								b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Import cost of all maintenance"));
+					double maint_output=0;
+					double spoil_output=0;
+					double furniture_output=0;
+					for (BoostSpec bb : tech.boosters.all()) {
+
+						if (Objects.equals(bb.boostable.key(), "CIVIC_MAINTENANCE")){
+							double costs = resource_use("Maintenance");
+							maint_output = tech_divisor_presentation("maintenance", costs, bb, b);
+						}
+						if (Objects.equals(bb.boostable.key(), "CIVIC_SPOILAGE")){
+							double costs = resource_use("Spoilage");
+
+							spoil_output = tech_divisor_presentation("spoilage", costs, bb, b);
+						}
+						if (Objects.equals(bb.boostable.key(), "CIVIC_FURNITURE")){
+							double costs = resource_use("Furniture");
+							furniture_output = tech_divisor_presentation("furniture", costs, bb, b);
+						}
+						if (KEYS.MAIN().UNDO.isPressed()) {
+							if ( !( cost_maint== 0 && cost_tools ==0 ) ) { b.sep(); }
+							if (cost_maint !=0){
+								b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(cost_maint * 10) / 10, 1).color(GCOLOR.T().IBAD));
+								b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Maintenance costs per knowledge worker"));
+								b.NL();
+							}
+							if (cost_tools !=0){
+								b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(cost_tools * 10) / 10, 1).color(GCOLOR.T().IBAD));
+								b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Tool costs per knowledge worker"));
+								b.NL();
+							}
+							if ( !( benefit_maint== 0 && benefit_tools ==0 ) ) { b.sep(); }
+							if (benefit_maint != 0){
+								b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(benefit_maint * 10) / 10, 1).color(GCOLOR.T().IBAD));
+								b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Maintenance costs per boosted industry worker"));
+								b.NL();
+							}
+							if (benefit_tools != 0) {
+								b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(benefit_tools * 10) / 10, 1).color(GCOLOR.T().IBAD));
+								b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Tool costs per boosted industry worker"));
 								b.NL();
 							}
 						}
-						b.sep();
-						b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(cost_maint * 10) /10, 1 ).color(GCOLOR.T().IBAD));
-						b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Average maintenance costs per knowledge worker"));
-						b.NL();
-						b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(cost_tools * 10) /10, 1 ).color(GCOLOR.T().IBAD));
-						b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Average tool costs per knowledge worker"));
-						b.NL();
-						b.sep();
-						b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(benefit_maint * 10) /10, 1 ).color(GCOLOR.T().IBAD));
-						b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Average maintenance costs for production per worker"));
-						b.NL();
-						b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(benefit_tools * 10) /10, 1 ).color(GCOLOR.T().IBAD));
-						b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Average tool costs per boosted industry worker"));
-						b.NL();
-
+					}
+					if (! (maint_output == 0 && spoil_output == 0 && furniture_output == 0 )){
+						if (!(KEYS.MAIN().UNDO.isPressed())){
+							b.add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) ((maint_output + spoil_output + furniture_output + cost_tot * costs) / costs)));
+							b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "$"));
+							b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Profit per knowledge worker"));
+							b.NL();
+						}
 					}
 					// End UI edits
 

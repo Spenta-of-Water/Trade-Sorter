@@ -30,12 +30,12 @@ public final class UIMaintenance extends IFullView {
                 section.body().setWidth(WIDTH).setHeight(1);
 
                         // Display the rows using the list of resources
-                        ArrayListGrower<EmiRow> rows = new ArrayListGrower<>();
+                        ArrayListGrower<MaintRow> rows = new ArrayListGrower<>();
                         double value_costs = 0;
                         // Sum up the total first
                         for (RESOURCE res : RESOURCES.ALL()) {
-                                import_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.PRICE().get(res);
-                                value_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.player().trade.pricesBuy.get(res);
+                                import_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.player().trade.pricesBuy.get(res);
+                                value_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.PRICE().get(res);
                         }
 
                 // Display top line messages
@@ -44,61 +44,62 @@ public final class UIMaintenance extends IFullView {
                 section.addDown(10, tableHeader);
 
                 // Create each row
+                RESOURCE last_res = null;
                 for (RESOURCE res : RESOURCES.ALL()) {
                         if (SETT.MAINTENANCE().estimateGlobal(res) != 0) {
-                                rows.add(new ResourceRow(res, tableHeader.width()));
+                                rows.add(new ResourceRow(res, tableHeader.width(), 0, 0));
                         }
+                last_res=res;
                 }
-                GuiSection resultRow = new ResultRow(import_costs, value_costs);
+                rows.add(new ResourceRow(last_res, tableHeader.width() , import_costs, value_costs));
+
 
                 // Display the rows!
-                GScrollRows scrollRows = new GScrollRows(rows, getHeightForElementToFill(section, resultRow, rows));
+                GScrollRows scrollRows = new GScrollRows(rows, HEIGHT);
                 section.addDown(5, scrollRows.view());
-                section.addDown(5, resultRow);
         }
 
-        private static int getHeightForElementToFill(GuiSection section, GuiSection finalElementToBeDisplayed, ArrayListGrower<EmiRow> rows){
-            int bottomPixelOfElementAboveUs = section.getLastY2();
-            int remainingScreenSpace = HEIGHT - bottomPixelOfElementAboveUs;
-            int pixelsWeCanNotUse = finalElementToBeDisplayed.body().height();
+//        private static int getHeightForElementToFill(GuiSection section, GuiSection finalElementToBeDisplayed, ArrayListGrower<MaintRow> rows){
+//            int bottomPixelOfElementAboveUs = section.getLastY2();
+//            int remainingScreenSpace = HEIGHT - bottomPixelOfElementAboveUs;
+//            int pixelsWeCanNotUse = finalElementToBeDisplayed.body().height();
+//
+//            int maximumHeightElementInTheMiddleCouldTakeUp = remainingScreenSpace - pixelsWeCanNotUse;
+//
+//            // We assume all elements have the same height.
+//            int spaceWeActuallyNeed = rows.get(0).body().height() * rows.size();
+//
+//            return Math.min(maximumHeightElementInTheMiddleCouldTakeUp, spaceWeActuallyNeed);
+//        }
 
-            int maximumHeightElementInTheMiddleCouldTakeUp = remainingScreenSpace - pixelsWeCanNotUse;
-
-            // We assume all elements have the same height.
-            int spaceWeActuallyNeed = rows.get(0).body().height() * rows.size();
-
-            return Math.min(maximumHeightElementInTheMiddleCouldTakeUp, spaceWeActuallyNeed);
-        }
-
-        private static class ResourceRow extends EmiRow {
+        private static class ResourceRow extends MaintRow {
             // Create the row using the resource:
-                ResourceRow(RESOURCE res, int width) {
-                        body().setWidth(width).setHeight(1);
-                        // Display resource.icon()
-                        add(GFORMAT.f(new GText(UI.FONT().S, 0), SETT.MAINTENANCE().estimateGlobal(res)).adjustWidth(), incTab(2), MARGIN);
-                        // Amount of resource used:
-                        add(res.icon(), incTab(3), 0);
-                        // Import costs for that resource:
-                        add(GFORMAT.i(new GText(UI.FONT().S, 0), (long) (SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.player().trade.pricesBuy.get(res))).adjustWidth(), incTab(2), MARGIN);
-                        add(GFORMAT.text(new GText(UI.FONT().S, 0), "denari").adjustWidth(), incTab(4), MARGIN);
-                        // Value of those resources:
-                        add(GFORMAT.i(new GText(UI.FONT().S, 0), (long) (SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.PRICE().get(res))).adjustWidth(), incTab(2), MARGIN);
-                        add(GFORMAT.text(new GText(UI.FONT().S, 0), "denari").adjustWidth(), incTab(4), MARGIN);
+                ResourceRow(RESOURCE res, int width, double import_costs, double value_costs) {
+                        if (import_costs ==0 &  value_costs ==0 ){
+                                double amount_of_res = SETT.MAINTENANCE().estimateGlobal(res);
+                                body().setWidth(width).setHeight(1);
+                                // Display resource.icon()
+                                add(GFORMAT.f(new GText(UI.FONT().S, 0), amount_of_res).adjustWidth(), incTab(2), MARGIN);
+                                // Amount of resource used:
+                                add(res.icon(), incTab(3), 0);
+                                // Import costs for that resource:
+                                add(GFORMAT.i(new GText(UI.FONT().S, 0), (long) (amount_of_res * FACTIONS.player().trade.pricesBuy.get(res))).adjustWidth(), incTab(2), MARGIN);
+                                add(GFORMAT.text(new GText(UI.FONT().S, 0), "denari").adjustWidth(), incTab(4), MARGIN);
+                                // Value of those resources:
+                                add(GFORMAT.i(new GText(UI.FONT().S, 0), (long) (amount_of_res * FACTIONS.PRICE().get(res))).adjustWidth(), incTab(2), MARGIN);
+                                add(GFORMAT.text(new GText(UI.FONT().S, 0), "denari").adjustWidth(), incTab(4), MARGIN);
+                        }
+                        else{
+                                add(GFORMAT.text(new GText(UI.FONT().S, 0), "Total Costs:").adjustWidth(), incTab(5), MARGIN);
+                                add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) -import_costs).adjustWidth(), incTab(2), MARGIN);
+                                add(GFORMAT.text(new GText(UI.FONT().S, 0), "denari").adjustWidth(), incTab(4), MARGIN);
+                                add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) -value_costs).adjustWidth(), incTab(2), MARGIN);
+                                add(GFORMAT.text(new GText(UI.FONT().S, 0), "denari").adjustWidth(), incTab(4), MARGIN);
+                        }
                 }
         }
 
-        private static class ResultRow extends EmiRow {
-                ResultRow(double import_costs, double value_costs) {
-                        body().setWidth(WIDTH).setHeight(1);
-                        add(GFORMAT.text(new GText(UI.FONT().S, 0), "Total Costs:").adjustWidth(), incTab(5), MARGIN);
-                        add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) -import_costs).adjustWidth(), incTab(2), MARGIN);
-                        add(GFORMAT.text(new GText(UI.FONT().S, 0), "denari").adjustWidth(), incTab(4), MARGIN);
-                        add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) -value_costs).adjustWidth(), incTab(2), MARGIN);
-                        add(GFORMAT.text(new GText(UI.FONT().S, 0), "denari").adjustWidth(), incTab(4), MARGIN);
-                }
-        }
-
-        private abstract static class EmiRow extends GuiSection {
+        private abstract static class MaintRow extends GuiSection {
                 protected static final int MARGIN = 4;
                 private double tab;
 

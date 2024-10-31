@@ -3,9 +3,9 @@
     <option name="ALTERNATIVE_JRE_PATH" value="corretto-1.8" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <classpathModifications>
-      <entry path="C:\Emi\Games\steamapps\common\Songs of Syx\base\script\Examples.jar" />
-      <entry path="C:\Emi\Games\steamapps\common\Songs of Syx\base\script\Tutorial.jar" />
-      <entry path="C:\Emi\Games\steamapps\common\Songs of Syx\base\script" />
+      <entry path="C:\Emi\Project Fun\Songs of Syx\V67\base\script\Examples.jar" />
+      <entry path="C:\Emi\Project Fun\Songs of Syx\V67\base\script\Tutorial.jar" />
+      <entry path="C:\Emi\Project Fun\Songs of Syx\V67\base\script" />
       <entry path="C:\Users\Emi\IdeaProjects\Extra Info\target\out\Extra Info\V67\script" />
       <entry path="C:\Users\Emi\IdeaProjects\Extra Info\target\out\Extra Info\V67\script\Extra Info.jar" />
     </classpathModifications>

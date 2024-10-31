@@ -128,9 +128,9 @@ public class PTech {
 				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Library"));b.tab(6);
 				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Average"));
 				b.NL();
-				b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_lab * 100) /100, 2 ).color(GCOLOR.T().IGOOD));b.tab(3);
-				b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_lib * 100) /100, 2 ).color(GCOLOR.T().IGOOD));b.tab(6);
-				b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_worker * 100) /100, 2 ).color(GCOLOR.T().IGOOD));
+				b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_lab * 10) /10, 1 ).color(GCOLOR.T().IGOOD));b.tab(3);
+				b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_lib * 10) /10, 1 ).color(GCOLOR.T().IGOOD));b.tab(6);
+				b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.round(know_worker * 10) /10, 1 ).color(GCOLOR.T().IGOOD));
 				b.NL();
 				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Number of workers:"));
 				b.NL();
@@ -138,9 +138,9 @@ public class PTech {
 				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Library"));b.tab(6);
 				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Total"));
 				b.NL();
-				b.add(GFORMAT.f(new GText(UI.FONT().S, 0), know_emp).color(GCOLOR.T().IGOOD));b.tab(3);
-				b.add(GFORMAT.f(new GText(UI.FONT().S, 0), know_emp2).color(GCOLOR.T().IGOOD));b.tab(6);
-				b.add(GFORMAT.f(new GText(UI.FONT().S, 0), know_emp+know_emp2).color(GCOLOR.T().IGOOD));
+				b.add(GFORMAT.f(new GText(UI.FONT().S, 0), know_emp,0).color(GCOLOR.T().IGOOD));b.tab(3);
+				b.add(GFORMAT.f(new GText(UI.FONT().S, 0), know_emp2,0).color(GCOLOR.T().IGOOD));b.tab(6);
+				b.add(GFORMAT.f(new GText(UI.FONT().S, 0), know_emp+know_emp2,0).color(GCOLOR.T().IGOOD));
 				b.NL();
 
 			};
