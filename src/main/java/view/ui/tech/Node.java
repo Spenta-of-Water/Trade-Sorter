@@ -211,7 +211,6 @@ public final class Node extends GuiSection{
 			benefit_tools = 0;
 
 			double benefit_maint_total = 0;
-			double benefit_maint_upgrade_total = 0;
 			double benefit_emp_total = 0;
 
 			for (BoostSpec b : tech.boosters.all()) { // For all boosts of this tech,
@@ -264,7 +263,6 @@ public final class Node extends GuiSection{
 						double boost = SETT.MAINTENANCE().speed();
 
 						double total_room_maintenance_import = 0;
-						double total_room_maintenance_import_upgraded = 0;
 						if (deg == null){ continue; }
 						for (int i = 0; i < deg.resSize(); i++) {
 							if (r.resAmount(i,1+r.upgrade()) <= 0)
@@ -272,21 +270,19 @@ public final class Node extends GuiSection{
 							RESOURCE res = deg.res(i);
 
 							double n = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, r.resAmount(i,r.upgrade()))* TIME.years().bitConversion(TIME.days()) / 16.0;
-							double m = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, r.resAmount(i,1+r.upgrade()))* TIME.years().bitConversion(TIME.days()) / 16.0;
 							double sellFor = FACTIONS.player().trade.pricesBuy.get(res);
 							total_room_maintenance_import -= n * sellFor;
-							total_room_maintenance_import_upgraded -= m * sellFor;
+
 
 						}
 						benefit_maint_total += total_room_maintenance_import; // Add for each room
-						benefit_maint_upgrade_total += total_room_maintenance_import_upgraded; // Add for each room
+
 
 					}
 				}
 			}
 			if (benefit_emp_total >0) { benefit_tools = benefit_tools / benefit_emp_total; }
 			if (benefit_emp_total >0) { benefit_maint = benefit_maint_total / benefit_emp_total; }
-			if (benefit_emp_total >0) { benefit_maint_upgrade = benefit_maint_upgrade_total / benefit_emp_total; }
 			benefit_tot = benefit_tools + benefit_maint;
 
 		}
@@ -298,85 +294,79 @@ public final class Node extends GuiSection{
 			double benefit_emp_total = 0;
 
 			for (Lock ll : tech.lockers.all()){ // For all unlockables
-//				if (benefit_maint_upgrade != 0){
-//					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(benefit_maint_upgrade * 10) / 10, 1).color(GCOLOR.T().IBAD));
-//					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Maintenance costs per boosted industry worker if all rooms are upgraded"));
-//					b.NL();
-//				}
-
 
 				for (RoomBlueprint h : ROOMS().all()) { // For each type of room blueprint    Note: We need SETT.ROOMS() to find the RoomInstance bonuses
 					if (  !(h instanceof RoomBlueprintIns)  ) { continue; } // Industries only
 
 					for (RoomInstance r : ((RoomBlueprintIns<?>) h).all()) { // For each workshop in the industry
-
 						if (r.employees() == null || !(r instanceof ROOM_PRODUCER)) { continue; } // That has employees and produces goods
 
+						RoomBlueprintImp b = (RoomBlueprintImp) r.blueprint();  // Get blueprint to find unlocks
+						try {b.upgrades().requires(r.upgrade(r.mX(), r.mY())+1).all().isEmpty();}catch(Exception e){continue;} //Skip this room if there are no upgrades
 						Industry ind = ((ROOM_PRODUCER) r).industry();  // Industry of the workshop
 						Boostable bonus = ind.bonus(); // The boosts of the industry
 
-//						if (bonus == null || b.boostable.key() != bonus.key()) { continue; } // Boost exists in industry and matches the tech
-						RoomBlueprintImp b = (RoomBlueprintImp) r.blueprint();
 
-						if (b.upgrades() == null){continue;}
-						try {
-							b.upgrades().requires(r.upgrade(r.mX(), r.mY())+1).all().isEmpty();
-						}
-						catch(Exception e){
-							continue;
-						}
+						if (bonus == null) { continue; } // Boost exists in industry and matches the tech
 
-						for (Lock<Faction> s : b.upgrades().requires(r.upgrade(r.mX(), r.mY())+1).all()) {
-                                                        if (s.unlocker.name == ll.unlocker.name) {
-                                                                contains = true;
+
+
+
+						// MAINTENANCE COSTS
+						for (Lock<Faction> s : b.upgrades().requires(r.upgrade(r.mX(), r.mY())+1).all()) { //loop through all buildings
+                                                        if (s.unlocker.name == ll.unlocker.name) { // If the tech matches the building
+                                                                contains = true; // Allow it to be shown later
 								benefit_emp_total += r.employees().employed(); // Employee count used for tools and maintenance
+								if (benefit_emp_total==0){continue;} // Skip if no employees
+								int up = 1; // +1 upgrade level
+								if ( r.upgrade() == r.blueprintI().upgrades().max() ){up=0;} // Unless it's already at the max
 
+								ROOM_DEGRADER deg = r.degrader(r.mX(), r.mY()); // rateResource requirement
+								double iso = r.isolation(r.mX(), r.mY()); 	// rateResource requirement
+								double boost = SETT.MAINTENANCE().speed();   	// rateResource requirement
 
-								// MAINTENANCE COSTS
-								ROOM_DEGRADER deg = r.degrader(r.mX(), r.mY());
-								double iso = r.isolation(r.mX(), r.mY());
-								double boost = SETT.MAINTENANCE().speed();
+								double total_room_maintenance_import = 0;		// reset 'current building' stats
+								double total_room_maintenance_import_upgraded = 0;	// reset 'current building' stats
+								if (deg == null){ continue; }    			// If no maintenance, skip
+								for (int i = 0; i < deg.resSize(); i++) {		// For each resource
+									if (r.resAmount(i,up+r.upgrade()) <= 0){continue;}	// skip if resource use is 0 (at upgraded maintenance level)
 
-								double total_room_maintenance_import = 0;
-								double total_room_maintenance_import_upgraded = 0;
-								if (deg == null){ continue; }
-								for (int i = 0; i < deg.resSize(); i++) {
-									if (r.resAmount(i,1+r.upgrade()) <= 0)
-										continue;
-									RESOURCE res = deg.res(i);
-
+									// Maintenance amount per day for current upgrade level
 									double n = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, r.resAmount(i,r.upgrade()))* TIME.years().bitConversion(TIME.days()) / 16.0;
-									double m = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, r.resAmount(i,1+r.upgrade()))* TIME.years().bitConversion(TIME.days()) / 16.0;
-									double sellFor = FACTIONS.player().trade.pricesBuy.get(res);
-									total_room_maintenance_import -= n * sellFor;
-									total_room_maintenance_import_upgraded -= m * sellFor;
+									// Maintenance amount per day for upgraded level (if not maxed)
+									double m = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, r.resAmount(i,up+r.upgrade()))* TIME.years().bitConversion(TIME.days()) / 16.0;
+									double sellFor = FACTIONS.player().trade.pricesBuy.get(deg.res(i)); 	// get the import cost of the resource
+									total_room_maintenance_import -= n * sellFor;				// multiply cost * amount of resource (not upgraded)
+									total_room_maintenance_import_upgraded -= m * sellFor;			// multiply cost * amount of resource (upgraded)
 
 								}
-								benefit_maint_total += total_room_maintenance_import; // Add for each room
-								benefit_maint_upgrade_total += total_room_maintenance_import_upgraded; // Add for each room
+								benefit_maint_total += total_room_maintenance_import; 				// Add cost for each room
+								benefit_maint_upgrade_total += total_room_maintenance_import_upgraded; 		// Add cost for each room
                                                         }
 						}
-						// is including more employment than it should, so I need restrict it better (everything in the if statement?)
 
-//						// TOOLS COSTS
-//						RoomEmploymentSimple ee = r.blueprint().employment();
-//						RoomEmploymentIns e = r.employees();
+//						// UPGRADE BOOSTS BENEFITS
+//						double add = 0;
+//						int tot = 0;
+//						double upgrade = 0 ;
 //
-//						for (RoomEquip w : ee.tools()) {
-//							double n = w.degradePerDay * e.tools(w);
-//							double sellFor = FACTIONS.player().trade.pricesBuy.get(w.resource);
-//							benefit_tools -= n * sellFor;
+//						for (Humanoid person : r.employees().employees()) { // for each person working
+//							tot++; //adding up the number of employees
+//							if (STATS.WORK().EMPLOYED.get(person) == r) { //IDK if this is needed, copied from hoverBoosts function
+//								for (Booster s : bonus.all()) { // look at all boosts an industry has
+//									if (!s.isMul) { add += s.get(person.indu());} // add up the non-multiplier bonuses
+//									if (Objects.equals(s.info.name, "Upgrade")){ upgrade = s.to();} // assign upgrade the booster amount
+//								}
+//							}
 //						}
-
+//						add /= tot; // add is the total additive bonuses.
+//						benefits += tot * upgrade / (1+add); //Add the technology's benefit of each workshop
 
 					}
 				}
 			}
-//			if (benefit_emp_total >0) { benefit_tools = benefit_tools / benefit_emp_total; }
 			if (benefit_emp_total >0) { benefit_maint_before = benefit_maint_total / benefit_emp_total; }
 			if (benefit_emp_total >0) { benefit_maint_upgrade = benefit_maint_upgrade_total / benefit_emp_total; }
-//			benefit_tot = benefit_tools + benefit_maint;
-
 		}
 
 		private double resource_use(String Source) {
