@@ -2,8 +2,10 @@ package view.ui.tech;
 
 import game.boosting.*;
 import game.faction.FACTIONS;
+import game.faction.Faction;
 import game.faction.player.PTech;
 import game.time.TIME;
+import game.values.Lock;
 import init.resources.RESOURCE;
 import init.resources.RESOURCES;
 import init.sprite.SPRITES;
@@ -19,10 +21,7 @@ import settlement.room.industry.module.Industry;
 import settlement.room.industry.module.ROOM_PRODUCER;
 import settlement.room.knowledge.laboratory.ROOM_LABORATORY;
 import settlement.room.knowledge.library.ROOM_LIBRARY;
-import settlement.room.main.RoomBlueprint;
-import settlement.room.main.RoomBlueprintIns;
-import settlement.room.main.RoomInstance;
-import settlement.room.main.RoomProduction;
+import settlement.room.main.*;
 import settlement.room.main.employment.RoomEmploymentIns;
 import settlement.room.main.employment.RoomEmploymentSimple;
 import settlement.room.main.employment.RoomEquip;
@@ -60,12 +59,15 @@ public final class Node extends GuiSection{
 	public static double benefit_maint = 0;	// Maintenance per worker for the benefitting industries
 	public static double cost_maint = 0;	// Maintenance per worker for the knowledge buildings
 
+	public static double benefit_maint_upgrade = 0;
+	public static double benefit_maint_before = 0 ;
+
 	public static double benefit_tools = 0; // tool cost per person for benefited industry buildings
 	public static double cost_tools = 0;    // tool cost per person for knowledge buildings
 
 	public static double cost_inputs = 0;    // paper cost per knowledge worker
 	public static double cost_education = 0; // Cost of all schools and universities, including paper, tools, maintenance
-
+	public boolean contains = false;
 
 	public static int know_emp = 0 ; 	// laboratory employment
 	public static int know_emp2 = 0 ;	// library  employment
@@ -201,7 +203,7 @@ public final class Node extends GuiSection{
 			cost_tot = cost_maint + cost_tools + cost_inputs;
 
 		}
-		void knowledge_benefits()
+		void booster_benefits()
 		{
 			// Adds up the boost benefits for every boost in the tech, by industry, by room, per person.
 			benefits = 0; // reset benefit upon new tech
@@ -209,6 +211,7 @@ public final class Node extends GuiSection{
 			benefit_tools = 0;
 
 			double benefit_maint_total = 0;
+			double benefit_maint_upgrade_total = 0;
 			double benefit_emp_total = 0;
 
 			for (BoostSpec b : tech.boosters.all()) { // For all boosts of this tech,
@@ -261,24 +264,118 @@ public final class Node extends GuiSection{
 						double boost = SETT.MAINTENANCE().speed();
 
 						double total_room_maintenance_import = 0;
+						double total_room_maintenance_import_upgraded = 0;
 						if (deg == null){ continue; }
 						for (int i = 0; i < deg.resSize(); i++) {
-							if (deg.resAmount(i) <= 0)
+							if (r.resAmount(i,1+r.upgrade()) <= 0)
 								continue;
 							RESOURCE res = deg.res(i);
 
-							double n = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, deg.resAmount(i))* TIME.years().bitConversion(TIME.days()) / 16.0;
+							double n = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, r.resAmount(i,r.upgrade()))* TIME.years().bitConversion(TIME.days()) / 16.0;
+							double m = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, r.resAmount(i,1+r.upgrade()))* TIME.years().bitConversion(TIME.days()) / 16.0;
 							double sellFor = FACTIONS.player().trade.pricesBuy.get(res);
 							total_room_maintenance_import -= n * sellFor;
+							total_room_maintenance_import_upgraded -= m * sellFor;
+
 						}
 						benefit_maint_total += total_room_maintenance_import; // Add for each room
+						benefit_maint_upgrade_total += total_room_maintenance_import_upgraded; // Add for each room
 
 					}
 				}
 			}
 			if (benefit_emp_total >0) { benefit_tools = benefit_tools / benefit_emp_total; }
 			if (benefit_emp_total >0) { benefit_maint = benefit_maint_total / benefit_emp_total; }
+			if (benefit_emp_total >0) { benefit_maint_upgrade = benefit_maint_upgrade_total / benefit_emp_total; }
 			benefit_tot = benefit_tools + benefit_maint;
+
+		}
+		void unlock_benefits()
+		{
+			// Adds up the boost benefits for every boost in the tech, by industry, by room, per person.
+			double benefit_maint_total = 0;
+			double benefit_maint_upgrade_total = 0;
+			double benefit_emp_total = 0;
+
+			for (Lock ll : tech.lockers.all()){ // For all unlockables
+//				if (benefit_maint_upgrade != 0){
+//					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(benefit_maint_upgrade * 10) / 10, 1).color(GCOLOR.T().IBAD));
+//					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Maintenance costs per boosted industry worker if all rooms are upgraded"));
+//					b.NL();
+//				}
+
+
+				for (RoomBlueprint h : ROOMS().all()) { // For each type of room blueprint    Note: We need SETT.ROOMS() to find the RoomInstance bonuses
+					if (  !(h instanceof RoomBlueprintIns)  ) { continue; } // Industries only
+
+					for (RoomInstance r : ((RoomBlueprintIns<?>) h).all()) { // For each workshop in the industry
+
+						if (r.employees() == null || !(r instanceof ROOM_PRODUCER)) { continue; } // That has employees and produces goods
+
+						Industry ind = ((ROOM_PRODUCER) r).industry();  // Industry of the workshop
+						Boostable bonus = ind.bonus(); // The boosts of the industry
+
+//						if (bonus == null || b.boostable.key() != bonus.key()) { continue; } // Boost exists in industry and matches the tech
+						RoomBlueprintImp b = (RoomBlueprintImp) r.blueprint();
+
+						if (b.upgrades() == null){continue;}
+						try {
+							b.upgrades().requires(r.upgrade(r.mX(), r.mY())+1).all().isEmpty();
+						}
+						catch(Exception e){
+							continue;
+						}
+
+						for (Lock<Faction> s : b.upgrades().requires(r.upgrade(r.mX(), r.mY())+1).all()) {
+                                                        if (s.unlocker.name == ll.unlocker.name) {
+                                                                contains = true;
+								benefit_emp_total += r.employees().employed(); // Employee count used for tools and maintenance
+
+
+								// MAINTENANCE COSTS
+								ROOM_DEGRADER deg = r.degrader(r.mX(), r.mY());
+								double iso = r.isolation(r.mX(), r.mY());
+								double boost = SETT.MAINTENANCE().speed();
+
+								double total_room_maintenance_import = 0;
+								double total_room_maintenance_import_upgraded = 0;
+								if (deg == null){ continue; }
+								for (int i = 0; i < deg.resSize(); i++) {
+									if (r.resAmount(i,1+r.upgrade()) <= 0)
+										continue;
+									RESOURCE res = deg.res(i);
+
+									double n = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, r.resAmount(i,r.upgrade()))* TIME.years().bitConversion(TIME.days()) / 16.0;
+									double m = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, r.resAmount(i,1+r.upgrade()))* TIME.years().bitConversion(TIME.days()) / 16.0;
+									double sellFor = FACTIONS.player().trade.pricesBuy.get(res);
+									total_room_maintenance_import -= n * sellFor;
+									total_room_maintenance_import_upgraded -= m * sellFor;
+
+								}
+								benefit_maint_total += total_room_maintenance_import; // Add for each room
+								benefit_maint_upgrade_total += total_room_maintenance_import_upgraded; // Add for each room
+                                                        }
+						}
+						// is including more employment than it should, so I need restrict it better (everything in the if statement?)
+
+//						// TOOLS COSTS
+//						RoomEmploymentSimple ee = r.blueprint().employment();
+//						RoomEmploymentIns e = r.employees();
+//
+//						for (RoomEquip w : ee.tools()) {
+//							double n = w.degradePerDay * e.tools(w);
+//							double sellFor = FACTIONS.player().trade.pricesBuy.get(w.resource);
+//							benefit_tools -= n * sellFor;
+//						}
+
+
+					}
+				}
+			}
+//			if (benefit_emp_total >0) { benefit_tools = benefit_tools / benefit_emp_total; }
+			if (benefit_emp_total >0) { benefit_maint_before = benefit_maint_total / benefit_emp_total; }
+			if (benefit_emp_total >0) { benefit_maint_upgrade = benefit_maint_upgrade_total / benefit_emp_total; }
+//			benefit_tot = benefit_tools + benefit_maint;
 
 		}
 
@@ -395,7 +492,8 @@ public final class Node extends GuiSection{
 			GCOLOR.UI().bg(isActive, false, isHovered).render(r, body,-1);
 
 			knowledge_costs();
-			knowledge_benefits();
+			booster_benefits();
+			unlock_benefits();
 			COLOR col = col(isHovered, costs, benefits); // Color change function
 			col.render(r, body,-4);
 
@@ -516,7 +614,8 @@ public final class Node extends GuiSection{
 					// Added UI elements to show info in hover box
 					b.sep();
 					knowledge_costs();
-					knowledge_benefits();
+					booster_benefits();
+					unlock_benefits();
 
 					b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(costs * 10) /10, 1 ).color(GCOLOR.T().IGOOD));
 					b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "The number of knowledge workers to get this tech."));
@@ -531,6 +630,16 @@ public final class Node extends GuiSection{
 					double maint_output=0;
 					double spoil_output=0;
 					double furniture_output=0;
+
+					if (contains){
+						b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(benefit_maint_before * 10) / 10, 1).color(GCOLOR.T().IBAD));
+						b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Current maintenance cost per worker"));
+						b.NL();
+						b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(benefit_maint_upgrade * 10) / 10, 1).color(GCOLOR.T().IBAD));
+						b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Maintenance costs per worker if all rooms are upgraded"));
+						b.NL();
+					}
+
 					for (BoostSpec bb : tech.boosters.all()) {
 
 						if (Objects.equals(bb.boostable.key(), "CIVIC_MAINTENANCE")){
@@ -565,14 +674,17 @@ public final class Node extends GuiSection{
 							}
 							if (cost_tot !=0){
 								b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(cost_tot * 10) / 10, 1).color(GCOLOR.T().IBAD));
-								b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Sum of denari costs per knowledge worker"));
+								b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Average knowledge worker costs"));
 								b.NL();
 							}
-
-
-
+//							if (benefit_maint_upgrade !=0) {
+//								b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(benefit_maint_upgrade * 10) / 10, 1).color(GCOLOR.T().IBAD));
+//								b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Maintenance costs per worker if all rooms are upgraded"));
+//								b.NL();
+//							}
 
 							if ( !( benefit_maint== 0 && benefit_tools ==0 && benefit_tot==0 ) ) { b.sep(); }
+
 							if (benefit_maint != 0){
 								b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(benefit_maint * 10) / 10, 1).color(GCOLOR.T().IBAD));
 								b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Maintenance costs per boosted industry worker"));
@@ -585,7 +697,7 @@ public final class Node extends GuiSection{
 							}
 							if (benefit_tot !=0){
 								b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(benefit_tot * 10) / 10, 1).color(GCOLOR.T().IBAD));
-								b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Sum of denari costs per boosted industry worker"));
+								b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Average boosted industry workers costs"));
 								b.NL();
 							}
 						}
