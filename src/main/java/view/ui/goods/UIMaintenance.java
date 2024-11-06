@@ -34,8 +34,10 @@ public final class UIMaintenance extends IFullView {
                         double value_costs = 0;
                         // Sum up the total first
                         for (RESOURCE res : RESOURCES.ALL()) {
-                                import_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.player().trade.pricesBuy.get(res);
-                                value_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.PRICE().get(res);
+                                if (SETT.MAINTENANCE().estimateGlobal(res) != 0) {
+                                        import_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.player().trade.pricesBuy.get(res);
+                                        value_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.PRICE().get(res);
+                                }
                         }
 
                 // Display top line messages
