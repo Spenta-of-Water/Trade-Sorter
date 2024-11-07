@@ -31,7 +31,9 @@ public final class UIMaintenance extends IFullView {
 
                         // Display the rows using the list of resources
                         ArrayListGrower<MaintRow> rows = new ArrayListGrower<>();
+                        import_costs = 0;
                         double value_costs = 0;
+
                         // Sum up the total first
                         for (RESOURCE res : RESOURCES.ALL()) {
                                 if (SETT.MAINTENANCE().estimateGlobal(res) != 0) {
