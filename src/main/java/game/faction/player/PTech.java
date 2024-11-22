@@ -3,17 +3,24 @@ package game.faction.player;
 import game.VERSION;
 import game.boosting.*;
 import game.faction.FACTIONS;
+import game.faction.FSlaves;
 import game.faction.Faction;
 import game.faction.npc.FactionNPC;
 import game.time.TIME;
 import game.values.Lockable;
+import init.race.RACES;
+import init.race.Race;
+import init.resources.RESOURCE;
+import init.resources.RESOURCES;
 import init.sprite.UI.UI;
 import init.tech.TECH;
 import init.tech.TECH.TechRequirement;
 import init.tech.TECHS;
 import init.text.D;
+import init.type.HCLASSES;
 import init.type.POP_CL;
 import settlement.main.SETT;
+import settlement.room.main.RoomProduction;
 import settlement.stats.STATS;
 import snake2d.util.file.FileGetter;
 import snake2d.util.file.FilePutter;
@@ -142,10 +149,68 @@ public class PTech {
 				b.add(GFORMAT.f(new GText(UI.FONT().S, 0), know_emp2,0).color(GCOLOR.T().IGOOD));b.tab(6);
 				b.add(GFORMAT.f(new GText(UI.FONT().S, 0), know_emp+know_emp2,0).color(GCOLOR.T().IGOOD));
 				b.NL();
-
+				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Est. value per worker:"));
+				b.NL();
+				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Production"));b.tab(3);
+				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Consumption"));b.tab(6);
+				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Sum"));b.tab(9);
+				b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Net Trade"));
+				b.NL();
+				b.add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) (production())));b.tab(3);
+				b.add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) (consumption())));b.tab(6);
+				b.add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) Math.round(production()+consumption()) ));b.tab(9);
+				b.add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) Math.round(net()) ));
+				b.NL();
+				double pop = 0;
+				for (Race res : RACES.all()) {
+					pop += STATS.POP().POP.data(HCLASSES.CITIZEN()).get(res);
+				}
+				b.add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) (production()/pop)));b.tab(3);
+				b.add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) (consumption()/pop)));b.tab(6);
+				b.add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) Math.round((production()+consumption())/pop) ));b.tab(9);
+				b.add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) Math.round(net()/pop) ));
+				b.NL();
 			};
 		};
+		private double production() {
+			double tot = 0;
+			for (RESOURCE res : RESOURCES.ALL()) {
+				for (RoomProduction.Source rr : SETT.ROOMS().PROD.producers(res)) {
+					if (rr.am() == 0) {continue;}
+					tot += rr.am() * FACTIONS.PRICE().get(res) ;
+				}
+			}
+			return tot;
+		}
+		private double consumption() {
+			double tot = 0;
+			for (RESOURCE res : RESOURCES.ALL()) {
+				for (RoomProduction.Source rr : SETT.ROOMS().PROD.consumers(res)) {
+					if (rr.am() == 0) {continue;}
+					tot -= rr.am() * FACTIONS.PRICE().get(res) ;
+				}
+			}
+			return tot;
+		}
+		private double net() {
+			double tot = 0;
+			for (RESOURCE res : RESOURCES.ALL()) {
+				double subtot = 0; // number of resources
+				for (RoomProduction.Source rr : SETT.ROOMS().PROD.producers(res)) {
+					if (rr.am() == 0) {continue;}
+					subtot += rr.am() ;
+				}
+				for (RoomProduction.Source rr : SETT.ROOMS().PROD.consumers(res)) {
+					if (rr.am() == 0) {continue;}
+					subtot -= rr.am() ;
+				}
+				// use sell price if net positive, buy price if net negative.
+				if (subtot>0){tot+=subtot * FACTIONS.player().trade.pricesSell.get(res); }
+				if (subtot<0){tot+=subtot * FACTIONS.player().trade.pricesBuy.get(res); }
 
+			}
+			return tot;
+		}
 		@Override
 		public INFO info(){
 			return i;

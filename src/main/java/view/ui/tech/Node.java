@@ -245,8 +245,9 @@ public final class Node extends GuiSection{
 							}
 						}
 						add /= tot; // add is the total additive bonuses.
-						benefits += tot * b.booster.to() / (1+add); //Add the technology's benefit of each workshop
-
+						if(  tot * b.booster.to() / (1+add) > 0  ){
+							benefits += tot * b.booster.to() / (1+add); //Add the technology's benefit of each workshop
+						}
 
 						// TOOLS COSTS
 						RoomEmploymentSimple ee = r.blueprint().employment();
@@ -400,6 +401,8 @@ public final class Node extends GuiSection{
 			}
 			return tot;
 		}
+
+
 
 		private double next_tech_benefit(BoostSpec bb){
 			double cur = 0;
