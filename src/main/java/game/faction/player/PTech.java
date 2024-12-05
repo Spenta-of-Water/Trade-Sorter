@@ -192,7 +192,7 @@ public class PTech {
 			}
 			return tot;
 		}
-		private double net() {
+		public double net() {
 			double tot = 0;
 			for (RESOURCE res : RESOURCES.ALL()) {
 				double subtot = 0; // number of resources

@@ -106,7 +106,7 @@ public final class Node extends GuiSection{
 	private class Content extends ClickableAbs{
 
 
-
+		/// #!# Start of stuff that will be moved to CostBenefit class that will be added to TECH
 		double costs;
 		double benefits;
 
@@ -116,14 +116,14 @@ public final class Node extends GuiSection{
 			if (CUR_TIME == playedGame()){return;}
 			CUR_TIME = playedGame();
 
-		// RESET VARIABLES
+			// RESET VARIABLES
 			know_emp = 0 ; 		// laboratory employment
 			know_emp2 = 0 ;		// library  employment
 			know_worker = 0; 	// reset "knowledge per worker"
 			long know_tot = 0;  	// Laboratory knowledge
 			double know_tot2 = 0; 	// library knowledge
 
-		// KNOWLEDGE AND EMPLOYMENT
+			// KNOWLEDGE AND EMPLOYMENT
 			for (ROOM_LABORATORY lab : ROOMS().LABORATORIES) {
 				know_tot += lab.knowledge();
 				know_emp += lab.employment().employed();
@@ -138,7 +138,7 @@ public final class Node extends GuiSection{
 			if ((know_emp + know_emp2)>0){ know_worker = (know_tot + know_tot2) / (know_emp + know_emp2);} // knowledge per worker (both)
 
 
-		// MAINTENANCE + TOOLS costs
+			// MAINTENANCE + TOOLS costs
 			cost_maint = 0;
 			cost_tools = 0;
 			cost_inputs= 0;
@@ -323,8 +323,8 @@ public final class Node extends GuiSection{
 						boolean contains = false;
 						// MAINTENANCE COSTS
 						for (Lock<Faction> s : b.upgrades().requires(r.upgrade(r.mX(), r.mY())+1).all()) { //loop through all buildings
-                                                        if (s.unlocker.name == ll.unlocker.name) { // If the tech matches the building
-                                                                contains_upgrade = true; // Allow it to be shown later
+							if (s.unlocker.name == ll.unlocker.name) { // If the tech matches the building
+								contains_upgrade = true; // Allow it to be shown later
 								contains = true;
 								benefit_emp_total += r.employees().employed(); // Employee count used for tools and maintenance
 								if (r.employees().employed()==0){continue;} // Skip if no employees
@@ -352,7 +352,7 @@ public final class Node extends GuiSection{
 								}
 								benefit_maint_total += total_room_maintenance_import; 				// Add cost for each room
 								benefit_maint_upgrade_total += total_room_maintenance_import_upgraded; 		// Add cost for each room
-                                                        }
+							}
 						}
 						if (contains) { // If this room had an unlock
 							// UPGRADE BOOSTS BENEFITS
@@ -462,6 +462,7 @@ public final class Node extends GuiSection{
 			}
 			return -denari_costs * tech_benefit/100;
 		}
+		/// #!# End of stuff that will be moved to CostBenefit class that will be added to TECH
 
 		Content(TECH tech){
 			body.setDim(88, 88);
