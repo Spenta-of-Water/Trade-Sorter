@@ -34,7 +34,9 @@ import view.keyboard.KeyButt;
 import view.main.VIEW;
 import view.ui.UIView;
 // Import the tabs code
+import view.ui.goods.UIExpenses;
 import view.ui.goods.UIMaintenance;
+import view.ui.goods.UIProduction;
 import view.ui.goods.UIRecipes;
 import view.ui.goods.UIValues;
 
@@ -49,6 +51,8 @@ public final class IManager {
     private final UIRecipes recipes;
     private final UIValues values;
     private final UIMaintenance all_maintenance;
+    private final UIExpenses all_expenses;
+    private final UIProduction all_production;
 
     public IManager(UIView view) {
         ArrayListGrower<IFullView> all = new ArrayListGrower<>();
@@ -69,6 +73,12 @@ public final class IManager {
 
         all_maintenance = new UIMaintenance();
         all.add(all_maintenance);
+
+        all_expenses = new UIExpenses();
+        all.add(all_expenses);
+
+        all_production = new UIProduction();
+        all.add(all_production);
 
         for (IFullView w : all) {
 
@@ -289,6 +299,8 @@ public final class IManager {
         bAdd(s, i++, recipes, UI.icons().s.money, null);
         bAdd(s, i++, values, UI.icons().s.money, null);
         bAdd(s, i++, all_maintenance, UI.icons().s.degrade, null);
+        bAdd(s, i++, all_expenses, UI.icons().s.degrade, null);
+        bAdd(s, i++, all_production, UI.icons().s.degrade, null);
 
         {
             GuiSection ss = new GuiSection();

@@ -1,4 +1,4 @@
-package view.ui.tech;
+package init.tech;
 
 import game.boosting.BOOSTABLES;
 import game.boosting.BoostSpec;
@@ -11,7 +11,6 @@ import game.values.Lock;
 import init.resources.RESOURCE;
 import init.resources.RESOURCES;
 import init.sprite.UI.UI;
-import init.tech.TECH;
 import init.type.POP_CL;
 import settlement.entity.humanoid.Humanoid;
 import settlement.main.SETT;
@@ -51,11 +50,11 @@ public class CostBenefit {
 
         public boolean contains_upgrade = false;
 
-        public static double benefit_maint_upgrade = 0;
-        public static double benefit_maint_before = 0 ;
-        public static double benefit_maint = 0;	// Maintenance per worker for the benefitting industries
-        public static double benefit_tools = 0; // tool cost per person for benefited industry buildings
-        public static double benefit_tot = 0; 	// total benefits cost (tools + maint atm) per person
+        public double benefit_maint_upgrade = 0;
+        public double benefit_maint_before = 0 ;
+        public double benefit_maint = 0;	// Maintenance per worker for the benefitting industries
+        public double benefit_tools = 0; // tool cost per person for benefited industry buildings
+        public double benefit_tot = 0; 	// total benefits cost (tools + maint atm) per person
 
         public static double cost_inputs = 0;    // paper cost per knowledge worker
         public static double cost_maint = 0;	// Maintenance per worker for the knowledge buildings
@@ -66,6 +65,11 @@ public class CostBenefit {
         double costs;      // Overall cost in workers
         double benefits;   // Overall benefit in workers
 
+        // Constructor
+        public TECH tech;
+        public CostBenefit(TECH t) {
+                tech = t;
+        }
 
         // Create the Green-Yellow-Red color for nodes based on the cost/benefit
         public COLOR col (boolean hovered, double benefits, TECH tech){
@@ -100,12 +104,17 @@ public class CostBenefit {
                 return new ColorImp(127, 127, 127).shade(shade_val);
         }
 
-
-        static void knowledge_costs()
-        {
+        public void update(TECH tech){
                 // Only run this if you haven't lately.
                 if (CUR_TIME == playedGame()){return;}
                 CUR_TIME = playedGame();
+                knowledge_costs();
+                booster_benefits(tech);
+                unlock_benefits(tech);
+        }
+        static void knowledge_costs()
+        {
+
 
                 // RESET VARIABLES
                 know_emp = 0 ; 		// laboratory employment

@@ -484,10 +484,7 @@ public final class Node extends GuiSection{
 
 
 			// ADDED FUNCTION RUNS
-			knowledge_costs();
-			booster_benefits();
-			unlock_benefits();
-
+			tech.Tech_CostBenefit.update(tech);
 
 			COLOR col = col(isHovered, benefits); // MODIFIED Color change function
 			col.render(r, body,-4);
