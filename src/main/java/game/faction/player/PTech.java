@@ -3,7 +3,6 @@ package game.faction.player;
 import game.VERSION;
 import game.boosting.*;
 import game.faction.FACTIONS;
-import game.faction.FSlaves;
 import game.faction.Faction;
 import game.faction.npc.FactionNPC;
 import game.time.TIME;
@@ -42,9 +41,8 @@ import view.ui.message.MessageText;
 
 import java.io.IOException;
 import java.util.Arrays;
+import static init.tech.CostBenefit.*;
 
-import static com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type.Node;
-import static view.ui.tech.Node.*;
 
 
 public class PTech {

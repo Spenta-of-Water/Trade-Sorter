@@ -39,8 +39,7 @@ import static settlement.main.SETT.ROOMS;
 
 public class CostBenefit {
 
-        static double CUR_TIME = 0;
-        private static double CUR_RUN = 0;
+        double CUR_TIME = 0;
         public static int know_emp = 0 ; 	// laboratory employment
         public static int know_emp2 = 0 ;	// library  employment
 
@@ -62,8 +61,8 @@ public class CostBenefit {
         public static double cost_tot = 0; 	// total costs (tools + maint atm) per person
         public static double cost_education = 0; // Cost of all schools and universities, including paper, tools, maintenance - not included yet
 
-        double costs;      // Overall cost in workers
-        double benefits;   // Overall benefit in workers
+        public double costs;      // Overall cost in workers
+        public double benefits;   // Overall benefit in workers
 
         // Constructor
         public TECH tech;
@@ -114,7 +113,6 @@ public class CostBenefit {
         }
         static void knowledge_costs()
         {
-
 
                 // RESET VARIABLES
                 know_emp = 0 ; 		// laboratory employment
@@ -203,10 +201,6 @@ public class CostBenefit {
         void booster_benefits(TECH tech)
         {
 
-                // Only run this if you haven't lately.
-                if (CUR_RUN == playedGame()){return;}
-                CUR_RUN = playedGame();
-
 
                 // Adds up the boost benefits for every boost in the tech, by industry, by room, per person.
                 benefits = 0; // reset benefit upon new tech
@@ -293,9 +287,6 @@ public class CostBenefit {
         void unlock_benefits(TECH tech)
         { // UNLOCKING UPGRADES
 
-                // Only run this if you haven't lately.
-                if (CUR_RUN == TIME.days().bitCurrent()){return;}
-                CUR_RUN = TIME.days().bitCurrent();
 
                 // Adds up the boost benefits for every boost in the tech, by industry, by room, per person.
                 double benefit_maint_total = 0;
@@ -385,7 +376,7 @@ public class CostBenefit {
                 if (benefit_emp_total >0) { benefit_maint_upgrade = benefit_maint_upgrade_total / benefit_emp_total; }
         }
 
-        static private double resource_use(String Source) {
+        public static double resource_use(String Source) {
                 double tot = 0;
                 for (RESOURCE res : RESOURCES.ALL()) {
                         for (RoomProduction.Source rr : SETT.ROOMS().PROD.consumers(res)) {
@@ -417,7 +408,7 @@ public class CostBenefit {
 
                 return 100 * (1 - v/w);
         }
-        private double tech_divisor_presentation(String what, double denari_costs, BoostSpec bb, TECH tech, GBox b) {
+        public double tech_divisor_presentation(String what, double denari_costs, BoostSpec bb, GBox b) {
                 double tech_benefit = next_tech_benefit(bb); // % of maintenance you'll still have, e.g. 20% reduction from current tech level
                 b.sep();
                 if (Objects.equals(what, "spoilage")){
