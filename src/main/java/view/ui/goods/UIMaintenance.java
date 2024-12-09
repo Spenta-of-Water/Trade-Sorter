@@ -170,7 +170,7 @@ public final class UIMaintenance extends IFullView {
                                 }
                                 body().setWidth(width).setHeight(1);
 
-                                add(GFORMAT.text(new GText(UI.FONT().S, 0), h.key).adjustWidth(), incTab(6), MARGIN);
+                                add(GFORMAT.text(new GText(UI.FONT().S, 0), ((RoomBlueprintIns<?>) h).info.name).adjustWidth(), incTab(6), MARGIN);
 
                                 add(GFORMAT.i(new GText(UI.FONT().S, 0), (long) room_type_maint_import).adjustWidth(), incTab(2), MARGIN);
                                 add(GFORMAT.text(new GText(UI.FONT().S, 0), "denari").adjustWidth(), incTab(4), MARGIN);
