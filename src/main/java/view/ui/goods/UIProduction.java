@@ -37,7 +37,7 @@ public final class UIProduction extends IFullView {
         static double total_value = 0;
         private static CharSequence ¤¤Name = "Production";
         public UIProduction() {
-                super(¤¤Name, SPRITES.icons().l.workshop);
+                super(¤¤Name, SPRITES.icons().l.plus);
         }
 
 

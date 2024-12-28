@@ -408,6 +408,19 @@ public class CostBenefit {
 
                 return 100 * (1 - v/w);
         }
+        static private double knowledge_tech_benefit(BoostSpec bb){
+                double cur = 0;
+                for ( Boostable A : BOOSTABLES.CIVICS().all() ) {
+                        if (Objects.equals(bb.boostable.key(), A.key)) {
+                                cur = A.get(POP_CL.clP(null, null));
+                        }
+                }
+                double v = bb.booster.to(); 	// benefit per level of tech
+                double w = cur + v;		// current benefit from all sources +1 tech level
+                v = cur;			// current benefit from all sources
+
+                return 100 * ( (v-w)/w );
+        }
         public double tech_divisor_presentation(String what, double denari_costs, BoostSpec bb, GBox b) {
                 double tech_benefit = next_tech_benefit(bb); // % of maintenance you'll still have, e.g. 20% reduction from current tech level
                 b.sep();

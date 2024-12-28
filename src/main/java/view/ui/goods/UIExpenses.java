@@ -37,7 +37,7 @@ public final class UIExpenses extends IFullView {
         static double total_value = 0;
         private static CharSequence ¤¤Name = "Expenses";
         public UIExpenses() {
-                super(¤¤Name, SPRITES.icons().l.workshop);
+                super(¤¤Name, SPRITES.icons().l.minus);
         }
 
 

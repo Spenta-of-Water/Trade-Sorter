@@ -40,6 +40,8 @@ import view.ui.goods.UIProduction;
 import view.ui.goods.UIRecipes;
 import view.ui.goods.UIValues;
 
+import java.io.IOException;
+
 public final class IManager {
 
     public static final int TOP_HEIGHT = 48;
@@ -54,7 +56,9 @@ public final class IManager {
     private final UIExpenses all_expenses;
     private final UIProduction all_production;
 
-    public IManager(UIView view) {
+
+
+    public IManager(UIView view) throws IOException {
         ArrayListGrower<IFullView> all = new ArrayListGrower<>();
         all.add(view.goods);
         all.add(view.economy);
@@ -296,22 +300,63 @@ public final class IManager {
         });
 
         // The icons being added to the main UI screen:
-        bAdd(s, i++, recipes, UI.icons().s.money, null);
-        bAdd(s, i++, values, UI.icons().s.money, null);
-        bAdd(s, i++, all_maintenance, UI.icons().s.degrade, null);
-        bAdd(s, i++, all_expenses, UI.icons().s.degrade, null);
-        bAdd(s, i++, all_production, UI.icons().s.degrade, null);
+//        bAdd(s, i++, recipes, UI.icons().s.money, null);
+//        bAdd(s, i++, values, UI.icons().s.money, null);
+        bAdd(s, i++, all_maintenance, UI.icons().s.degrade, new GStat() {
 
+            @Override
+            public void update(GText text) {
+                GFORMAT.i(text, (long) maint_value());
+                text.errorify();
+            }
+        });
+
+
+//        bAdd(s, i++, all_expenses, UI.icons().s.custom1, null);
+//        bAdd(s, i++, all_production, UI.icons().s.custom2, null);
+//        bb(all_expenses, UI.icons().s.custom1, null);
+//        bb(all_production, UI.icons().s.custom2, null);
         {
-            GuiSection ss = new GuiSection();
-            ss.addRight(0, bb(VIEW.UI().level, UI.icons().s.arrowUp, null));
-            ss.addRight(0, bb(VIEW.UI().profile, UI.icons().s.menu, null));
+            int k = 0;
+           GuiSection ss = new GuiSection();
+            bAdd2(ss, k++, recipes, UI.icons().s.money, null);
+            bAdd2(ss, k++, values, UI.icons().s.money, null);
+
+            bAdd2(ss, k++, all_expenses, UI.icons().s.custom1, null);
+            bAdd2(ss, k++, all_production, UI.icons().s.custom2, null);
+
+            bAdd2(ss, k++, VIEW.UI().level, UI.icons().s.arrowUp, null);
+            bAdd2(ss, k++, VIEW.UI().profile, UI.icons().s.menu, null);
+
             bAdd(s, i++, ss);
         }
 
 
         return s;
 
+
+    }
+    public double maint_value() {
+        //double import_costs = 0;
+        double value_costs = 0;
+        // Sum up the total resource use and update building_totals values
+        for (RESOURCE res : RESOURCES.ALL()) {
+            if (SETT.MAINTENANCE().estimateGlobal(res) != 0) {
+                //      import_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.player().trade.pricesBuy.get(res);
+                value_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.PRICE().get(res);
+            }
+            continue;
+        }
+        return value_costs;
+    }
+    private void bAdd2(GuiSection s, int i, IFullView v, SPRITE icon, SPRITE vv) {
+        CLICKABLE p = bb(v, icon, vv);
+        bAdd2(s, i, p);
+
+    }
+    private void bAdd2(GuiSection s, int i, RENDEROBJ ren) {
+
+        s.add(ren, (i/2)*24, 24*((i%2)));
 
     }
 
@@ -322,7 +367,7 @@ public final class IManager {
     }
 
     private CLICKABLE bb(IFullView v, SPRITE icon, SPRITE vv) {
-        CLICKABLE p = new CLICKABLE.ClickableAbs(74/(vv == null ? 2 : 1), 24) {
+        CLICKABLE p = new CLICKABLE.ClickableAbs(74/(vv == null ? 3 : 1), 24) {
 
             @Override
             protected void render(SPRITE_RENDERER r, float ds, boolean isActive, boolean isSelected, boolean isHovered) {
