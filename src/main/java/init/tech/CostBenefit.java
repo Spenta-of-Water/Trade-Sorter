@@ -17,8 +17,7 @@ import settlement.main.SETT;
 import settlement.maintenance.ROOM_DEGRADER;
 import settlement.room.industry.module.Industry;
 import settlement.room.industry.module.ROOM_PRODUCER;
-import settlement.room.knowledge.laboratory.ROOM_LABORATORY;
-import settlement.room.knowledge.library.ROOM_LIBRARY;
+import settlement.room.industry.module.RoomProduction;
 import settlement.room.main.*;
 import settlement.room.main.employment.RoomEmploymentIns;
 import settlement.room.main.employment.RoomEmploymentSimple;
@@ -35,35 +34,24 @@ import view.keyboard.KEYS;
 import java.util.Objects;
 
 import static game.time.TIME.playedGame;
-import static settlement.main.SETT.ROOMS;
+import static settlement.main.SETT.*;
 
 public class CostBenefit {
 
-        static double CUR_TIME = 0;
-        private static double CUR_RUN = 0;
-        public static int know_emp = 0 ; 	// laboratory employment
-        public static int know_emp2 = 0 ;	// library  employment
+        double CUR_TIME = 0;
+        // Old Variables for reference
+        public static double cost_tot = 0; 	// total costs (tools + maint atm) per person
 
-        public static double know_lab = 0; 	// knowledge per laboratory worker
-        public static double know_lib = 0; 	// knowledge per library worker
-        public static double know_worker;  	// knowledge per worker (average)
 
         public boolean contains_upgrade = false;
-
         public double benefit_maint_upgrade = 0;
         public double benefit_maint_before = 0 ;
         public double benefit_maint = 0;	// Maintenance per worker for the benefitting industries
         public double benefit_tools = 0; // tool cost per person for benefited industry buildings
         public double benefit_tot = 0; 	// total benefits cost (tools + maint atm) per person
 
-        public static double cost_inputs = 0;    // paper cost per knowledge worker
-        public static double cost_maint = 0;	// Maintenance per worker for the knowledge buildings
-        public static double cost_tools = 0;    // tool cost per person for knowledge buildings
-        public static double cost_tot = 0; 	// total costs (tools + maint atm) per person
-        public static double cost_education = 0; // Cost of all schools and universities, including paper, tools, maintenance - not included yet
-
-        double costs;      // Overall cost in workers
-        double benefits;   // Overall benefit in workers
+        public double costs;      // Overall cost in workers
+        public double benefits;   // Overall benefit in workers
 
         // Constructor
         public TECH tech;
@@ -73,10 +61,6 @@ public class CostBenefit {
 
         // Create the Green-Yellow-Red color for nodes based on the cost/benefit
         public COLOR col (boolean hovered, double benefits, TECH tech){
-                if (know_worker >=0){ // workers needed for this tech's cost
-                        costs = FACTIONS.player().tech.costOfNextWithRequired(tech) / know_worker;
-                }else{  costs = 0;}
-
 
                 double shade_val = hovered ? 1 : .6;
                 // If no knowledge workers or no calculated benefits, default to white
@@ -108,104 +92,14 @@ public class CostBenefit {
                 // Only run this if you haven't lately.
                 if (CUR_TIME == playedGame()){return;}
                 CUR_TIME = playedGame();
-                knowledge_costs();
+                Knowledge_Costs.costs();
                 booster_benefits(tech);
                 unlock_benefits(tech);
         }
-        static void knowledge_costs()
-        {
 
-
-                // RESET VARIABLES
-                know_emp = 0 ; 		// laboratory employment
-                know_emp2 = 0 ;		// library  employment
-                know_worker = 0; 	// reset "knowledge per worker"
-                long know_tot = 0;  	// Laboratory knowledge
-                double know_tot2 = 0; 	// library knowledge
-
-                // KNOWLEDGE AND EMPLOYMENT
-                for (ROOM_LABORATORY lab : ROOMS().LABORATORIES) {
-                        know_tot += lab.knowledge();
-                        know_emp += lab.employment().employed();
-                }
-                for (ROOM_LIBRARY libraries : ROOMS().LIBRARIES) {
-                        know_tot2 += libraries.knowledge();
-                        know_emp2 += libraries.employment().employed();
-                }
-                know_tot2 *= know_tot; // libraries knowledge is a multiplier of laboratory knowledge
-                if (know_emp  != 0){ know_lab  = know_tot  / know_emp ;} // knowledge per laboratory worker
-                if (know_emp2 != 0){ know_lib  = know_tot2 / know_emp2;} // knowledge per library worker
-                if ((know_emp + know_emp2)>0){ know_worker = (know_tot + know_tot2) / (know_emp + know_emp2);} // knowledge per worker (both)
-
-
-                // MAINTENANCE + TOOLS costs
-                cost_maint = 0;
-                cost_tools = 0;
-                cost_inputs= 0;
-                double cost_maint_total = 0;
-                double cost_emp_total = 0;
-                for (RoomBlueprint h : ROOMS().all()) {
-                        if (Objects.equals(h.key, "LABORATORY_NORMAL") || Objects.equals(h.key, "LIBRARY_NORMAL")) {
-                                for (RoomInstance r : ((RoomBlueprintIns<?>) h).all()) {
-                                        if (r.employees() == null) { continue; } // That has employees
-                                        RoomEmploymentSimple ee = r.blueprint().employment();
-                                        RoomEmploymentIns e = r.employees();
-
-                                        // PAPER (INPUTS)
-                                        if ( h.key.equals("LIBRARY_NORMAL")) {
-                                                // How ModuleIndustry calculates input costs
-                                                ROOM_PRODUCER s = ((ROOM_PRODUCER) r);
-                                                double total = 0;
-
-                                                for (int ri = 0; ri < s.industry().ins().size(); ri++) {
-                                                        Industry.IndustryResource i = s.industry().ins().get(ri);
-                                                        double n = i.dayPrev.get(s);
-                                                        double sellFor = FACTIONS.player().trade.pricesBuy.get(i.resource);
-                                                        total -= n * sellFor;
-                                                }
-                                                cost_inputs += total;
-                                        }
-
-                                        // TOOLS
-                                        for (RoomEquip w : ee.tools()) {
-                                                double n = w.degradePerDay * e.tools(w);
-                                                double sellFor = FACTIONS.player().trade.pricesBuy.get(w.resource);
-                                                cost_tools -= n * sellFor;
-                                        }
-
-                                        // MAINTENANCE
-                                        ROOM_DEGRADER deg = r.degrader(r.mX(), r.mY());
-                                        double iso = r.isolation(r.mX(), r.mY());
-                                        double boost = SETT.MAINTENANCE().speed();
-                                        double total_room_maintenance_import = 0;
-
-                                        if (deg == null) { continue; }
-                                        for (int i = 0; i < deg.resSize(); i++) {
-                                                if (deg.resAmount(i) <= 0)
-                                                        continue;
-                                                RESOURCE res = deg.res(i);
-
-                                                double n = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, deg.resAmount(i)) * TIME.years().bitConversion(TIME.days()) / 16.0;
-                                                double sellFor = FACTIONS.player().trade.pricesBuy.get(res);
-                                                total_room_maintenance_import -= n * sellFor;
-                                        }
-                                        cost_maint_total += total_room_maintenance_import; // Add for each room
-                                        cost_emp_total += r.employees().employed();
-                                }
-                        }
-                }
-                if (cost_emp_total >0) { cost_maint = cost_maint_total / cost_emp_total; }
-                if (cost_emp_total >0) { cost_tools /=  cost_emp_total; }
-                if (cost_emp_total >0) { cost_inputs /= cost_emp_total; }
-                cost_tot = cost_maint + cost_tools + cost_inputs;
-        }
 
         void booster_benefits(TECH tech)
         {
-
-                // Only run this if you haven't lately.
-                if (CUR_RUN == playedGame()){return;}
-                CUR_RUN = playedGame();
 
 
                 // Adds up the boost benefits for every boost in the tech, by industry, by room, per person.
@@ -264,7 +158,7 @@ public class CostBenefit {
                                         // MAINTENANCE COSTS
                                         ROOM_DEGRADER deg = r.degrader(r.mX(), r.mY());
                                         double iso = r.isolation(r.mX(), r.mY());
-                                        double boost = SETT.MAINTENANCE().speed();
+                                        double boost = MAINTENANCE().speed();
 
                                         double total_room_maintenance_import = 0;
                                         if (deg == null){ continue; }
@@ -293,9 +187,6 @@ public class CostBenefit {
         void unlock_benefits(TECH tech)
         { // UNLOCKING UPGRADES
 
-                // Only run this if you haven't lately.
-                if (CUR_RUN == TIME.days().bitCurrent()){return;}
-                CUR_RUN = TIME.days().bitCurrent();
 
                 // Adds up the boost benefits for every boost in the tech, by industry, by room, per person.
                 double benefit_maint_total = 0;
@@ -333,7 +224,7 @@ public class CostBenefit {
 
                                                         ROOM_DEGRADER deg = r.degrader(r.mX(), r.mY()); // rateResource requirement
                                                         double iso = r.isolation(r.mX(), r.mY()); 	// rateResource requirement
-                                                        double boost = SETT.MAINTENANCE().speed();   	// rateResource requirement
+                                                        double boost = MAINTENANCE().speed();   	// rateResource requirement
 
                                                         double total_room_maintenance_import = 0;		// reset 'current building' stats
                                                         double total_room_maintenance_import_upgraded = 0;	// reset 'current building' stats
@@ -385,7 +276,7 @@ public class CostBenefit {
                 if (benefit_emp_total >0) { benefit_maint_upgrade = benefit_maint_upgrade_total / benefit_emp_total; }
         }
 
-        static private double resource_use(String Source) {
+        public static double resource_use(String Source) {
                 double tot = 0;
                 for (RESOURCE res : RESOURCES.ALL()) {
                         for (RoomProduction.Source rr : SETT.ROOMS().PROD.consumers(res)) {
@@ -417,7 +308,7 @@ public class CostBenefit {
 
                 return 100 * (1 - v/w);
         }
-        private double tech_divisor_presentation(String what, double denari_costs, BoostSpec bb, TECH tech, GBox b) {
+        public double tech_divisor_presentation(String what, double denari_costs, BoostSpec bb, GBox b) {
                 double tech_benefit = next_tech_benefit(bb); // % of maintenance you'll still have, e.g. 20% reduction from current tech level
                 b.sep();
                 if (Objects.equals(what, "spoilage")){

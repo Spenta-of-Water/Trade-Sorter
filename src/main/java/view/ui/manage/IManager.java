@@ -2,6 +2,7 @@ package view.ui.manage;
 
 import game.GAME;
 import game.faction.FACTIONS;
+import game.faction.player.PTech.TechCurr;
 import init.C;
 import init.resources.RESOURCE;
 import init.resources.RESOURCES;
@@ -39,20 +40,19 @@ import view.ui.goods.UIMaintenance;
 import view.ui.goods.UIProduction;
 import view.ui.goods.UIRecipes;
 import view.ui.goods.UIValues;
-
 public final class IManager {
-
-    public static final int TOP_HEIGHT = 48;
-
-    private final GuiSection top = new GuiSection();
-    private IFullView current;
-    private final Inter inter = new Inter();
     // The tabs being added
     private final UIRecipes recipes;
     private final UIValues values;
     private final UIMaintenance all_maintenance;
     private final UIExpenses all_expenses;
     private final UIProduction all_production;
+
+    public static final int TOP_HEIGHT = 48;
+
+    private final GuiSection top = new GuiSection();
+    private IFullView current;
+    private final Inter inter = new Inter();
 
     public IManager(UIView view) {
         ArrayListGrower<IFullView> all = new ArrayListGrower<>();
@@ -282,7 +282,10 @@ public final class IManager {
 
             @Override
             public void update(GText text) {
-                GFORMAT.i(text, GAME.player().tech.available().get());
+                int am = Integer.MAX_VALUE;
+                for (TechCurr c : GAME.player().tech.currs())
+                    am = Math.min(am, c.available());
+                GFORMAT.i(text, am);
             }
         });
 
@@ -296,25 +299,55 @@ public final class IManager {
         });
 
         // The icons being added to the main UI screen:
-        bAdd(s, i++, recipes, UI.icons().s.money, null);
-        bAdd(s, i++, values, UI.icons().s.money, null);
-        bAdd(s, i++, all_maintenance, UI.icons().s.degrade, null);
-        bAdd(s, i++, all_expenses, UI.icons().s.degrade, null);
-        bAdd(s, i++, all_production, UI.icons().s.degrade, null);
+        bAdd(s, i++, all_maintenance, UI.icons().s.degrade, new GStat() {
 
+            @Override
+            public void update(GText text) {
+                GFORMAT.i(text, (long) maint_value());
+                text.errorify();
+            }
+        });
         {
+            int k = 0;
             GuiSection ss = new GuiSection();
-            ss.addRight(0, bb(VIEW.UI().level, UI.icons().s.arrowUp, null));
-            ss.addRight(0, bb(VIEW.UI().profile, UI.icons().s.menu, null));
+            bAdd2(ss, k++, recipes, UI.icons().s.money, null);
+            bAdd2(ss, k++, values, UI.icons().s.money, null);
+
+            bAdd2(ss, k++, all_expenses, UI.icons().s.custom1, null);
+            bAdd2(ss, k++, all_production, UI.icons().s.custom2, null);
+
+            bAdd2(ss, k++, VIEW.UI().level, UI.icons().s.arrowUp, null);
+            bAdd2(ss, k++, VIEW.UI().profile, UI.icons().s.menu, null);
+
             bAdd(s, i++, ss);
         }
-
-
         return s;
 
 
     }
+    public double maint_value() {
+        //double import_costs = 0;
+        double value_costs = 0;
+        // Sum up the total resource use and update building_totals values
+        for (RESOURCE res : RESOURCES.ALL()) {
+            if (SETT.MAINTENANCE().estimateGlobal(res) != 0) {
+                //      import_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.player().trade.pricesBuy.get(res);
+                value_costs += SETT.MAINTENANCE().estimateGlobal(res) * FACTIONS.PRICE().get(res);
+            }
+            continue;
+        }
+        return value_costs;
+    }
+    private void bAdd2(GuiSection s, int i, IFullView v, SPRITE icon, SPRITE vv) {
+        CLICKABLE p = bb(v, icon, vv);
+        bAdd2(s, i, p);
 
+    }
+    private void bAdd2(GuiSection s, int i, RENDEROBJ ren) {
+
+        s.add(ren, (i/2)*24, 24*((i%2)));
+
+    }
     private void bAdd(GuiSection s, int i, IFullView v, SPRITE icon, SPRITE vv) {
         CLICKABLE p = bb(v, icon, vv);
         bAdd(s, i, p);
@@ -322,7 +355,7 @@ public final class IManager {
     }
 
     private CLICKABLE bb(IFullView v, SPRITE icon, SPRITE vv) {
-        CLICKABLE p = new CLICKABLE.ClickableAbs(74/(vv == null ? 2 : 1), 24) {
+        CLICKABLE p = new CLICKABLE.ClickableAbs(74/(vv == null ? 3 : 1), 24) {
 
             @Override
             protected void render(SPRITE_RENDERER r, float ds, boolean isActive, boolean isSelected, boolean isHovered) {

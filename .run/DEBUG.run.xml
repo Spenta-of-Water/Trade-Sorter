@@ -3,15 +3,15 @@
     <option name="ALTERNATIVE_JRE_PATH" value="corretto-1.8" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <classpathModifications>
-      <entry path="C:\Emi\Project Fun\Songs of Syx\V67\base\script\Examples.jar" />
-      <entry path="C:\Emi\Project Fun\Songs of Syx\V67\base\script\Tutorial.jar" />
-      <entry path="C:\Emi\Project Fun\Songs of Syx\V67\base\script" />
-      <entry path="C:\Users\Emi\IdeaProjects\Extra Info\target\out\Extra Info\V67\script" />
-      <entry path="C:\Users\Emi\IdeaProjects\Extra Info\target\out\Extra Info\V67\script\Extra Info.jar" />
+      <entry path="C:\Emi\Project Fun\Songs of Syx\V68\base\script\Examples.jar" />
+      <entry path="C:\Emi\Project Fun\Songs of Syx\V68\base\script\Tutorial.jar" />
+      <entry path="C:\Emi\Project Fun\Songs of Syx\V68\base\script" />
+      <entry path="C:\Users\Emi\IdeaProjects\Extra Info - V68\target\out\Extra Info\V68\script" />
+      <entry path="C:\Users\Emi\IdeaProjects\Extra Info - V68\target\out\Extra Info\V68\script\Extra Info.jar" />
     </classpathModifications>
     <option name="MAIN_CLASS_NAME" value="init.MainProcess" />
     <module name="extra.info" />
-    <option name="WORKING_DIRECTORY" value="C:/Emi/Project Fun/Songs of Syx/V67" />
+    <option name="WORKING_DIRECTORY" value="C:/Emi/Project Fun/Songs of Syx/V68" />
     <method v="2">
       <option name="Make" enabled="true" />
       <option name="Maven.BeforeRunTask" enabled="true" file="$PROJECT_DIR$/pom.xml" goal="clean" />

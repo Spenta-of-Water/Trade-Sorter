@@ -1,35 +1,22 @@
 package view.ui.goods;
 
 import game.faction.FACTIONS;
-import game.time.TIME;
-import init.race.RACES;
-import init.race.Race;
 import init.resources.RESOURCE;
 import init.resources.RESOURCES;
 import init.sprite.SPRITES;
 import init.sprite.UI.UI;
-import init.type.HCLASS;
-import init.type.HCLASSES;
-import init.type.NEEDS;
 import settlement.main.SETT;
-import settlement.maintenance.ROOM_DEGRADER;
-import settlement.room.main.RoomBlueprint;
-import settlement.room.main.RoomBlueprintIns;
-import settlement.room.main.RoomInstance;
-import settlement.room.main.RoomProduction;
-import settlement.stats.STATS;
+import settlement.room.industry.module.RoomProduction;
 import snake2d.util.gui.GuiSection;
 import snake2d.util.sets.ArrayListGrower;
 import util.gui.misc.GText;
 import util.gui.table.GScrollRows;
 import util.info.GFORMAT;
 import view.ui.manage.IFullView;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static settlement.main.SETT.ROOMS;
 
 public final class UIExpenses extends IFullView {
 
@@ -37,7 +24,7 @@ public final class UIExpenses extends IFullView {
         static double total_value = 0;
         private static CharSequence ¤¤Name = "Expenses";
         public UIExpenses() {
-                super(¤¤Name, SPRITES.icons().l.workshop);
+                super(¤¤Name, SPRITES.icons().l.minus);
         }
 
 

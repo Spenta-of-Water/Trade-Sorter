@@ -16,7 +16,7 @@ import settlement.maintenance.ROOM_DEGRADER;
 import settlement.room.main.RoomBlueprint;
 import settlement.room.main.RoomBlueprintIns;
 import settlement.room.main.RoomInstance;
-import settlement.room.main.RoomProduction;
+import settlement.room.industry.module.RoomProduction;
 import settlement.stats.STATS;
 import snake2d.util.gui.GuiSection;
 import snake2d.util.sets.ArrayListGrower;
@@ -37,7 +37,7 @@ public final class UIProduction extends IFullView {
         static double total_value = 0;
         private static CharSequence ¤¤Name = "Production";
         public UIProduction() {
-                super(¤¤Name, SPRITES.icons().l.workshop);
+                super(¤¤Name, SPRITES.icons().l.plus);
         }
 
 
@@ -100,7 +100,7 @@ public final class UIProduction extends IFullView {
                 section.addDown(5, scrollRows.view());
         }
 
-        private static class AddRow extends RegRow {
+        private class AddRow extends RegRow {
                 // Create the row using the resource:
                 AddRow(RoomProduction.Source ii, int width, String spec) {
 
@@ -145,7 +145,7 @@ public final class UIProduction extends IFullView {
                 }
         }
 
-        private abstract static class RegRow extends GuiSection {
+        private abstract class RegRow extends GuiSection {
                 protected static final int MARGIN = 4;
                 private double tab;
 
