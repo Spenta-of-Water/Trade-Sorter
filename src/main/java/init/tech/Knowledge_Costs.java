@@ -24,18 +24,18 @@ public class Knowledge_Costs {
         public static double [] know_tot    ;// total value the player has
         public static double [] know_emp    ;// employment in buildings that give this currency
         public static double [] know_worker ;// tech value per worker
-        public static double [] know_costs  ;// Total costs per worker
+        public static double [] cost_total  ;// Total costs per worker
         public static double [] cost_inputs ;// input costs
         public static double [] cost_maint  ;// maintenance costs
         public static double [] cost_tools  ;// tools costs
 
         private static void setup() {
-                if (index > 0) return;
+//                if (index > 0) return;
                 index = FACTIONS.player().tech().currs().size();
                 know_tot    = new double[index];  	// total value the player has
                 know_emp    = new double[index]; 	// employment in buildings that give this currency
                 know_worker = new double[index]; 	// tech value per worker
-                know_costs  = new double[index]; 	// Total costs per worker
+                cost_total  = new double[index]; 	// Total costs per worker
                 cost_inputs = new double[index];        // input costs
                 cost_maint  = new double[index];        // maintenance costs
                 cost_tools  = new double[index];        // tools costs
@@ -109,7 +109,7 @@ public class Knowledge_Costs {
                                         }
                                 }
                                 if (know_emp[index] != 0) { know_worker[index] = know_tot[index] / know_emp[index] ; }
-                                if (know_emp[index] != 0) { know_costs[index] = ( cost_inputs[index] + cost_maint[index] + cost_tools[index] ) / know_emp[index] ; }
+                                if (know_emp[index] != 0) { cost_total[index] = ( cost_inputs[index] + cost_maint[index] + cost_tools[index] ) / know_emp[index] ; }
                         }
                         index += 1;
                 }

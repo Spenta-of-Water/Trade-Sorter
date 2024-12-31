@@ -30,10 +30,13 @@ import util.gui.misc.GBox;
 import util.gui.misc.GText;
 import util.info.GFORMAT;
 import view.keyboard.KEYS;
+import view.ui.tech.Node_Extra;
 
 import java.util.Objects;
 
 import static game.time.TIME.playedGame;
+import static init.tech.Knowledge_Costs.cost_inputs;
+import static init.tech.Knowledge_Costs.know_worker;
 import static settlement.main.SETT.*;
 
 public class CostBenefit {
@@ -60,8 +63,9 @@ public class CostBenefit {
         }
 
         // Create the Green-Yellow-Red color for nodes based on the cost/benefit
-        public COLOR col (boolean hovered, double benefits, TECH tech){
-
+        public COLOR col (boolean hovered, TECH tech){
+                benefits = tech.Tech_CostBenefit.benefits;
+                costs = tech.Extra.worker_cost;
                 double shade_val = hovered ? 1 : .6;
                 // If no knowledge workers or no calculated benefits, default to white
                 if (costs <= 0 || benefits <= 0) {
@@ -95,6 +99,17 @@ public class CostBenefit {
                 Knowledge_Costs.costs();
                 booster_benefits(tech);
                 unlock_benefits(tech);
+
+                // Calculate the total costs
+                int j = 0;
+                double worker_cost   = 0;
+                double material_cost = 0;
+                for (TechCost c : tech.costs) {
+                        costs   += c.amount / know_worker[j];
+                        cost_tot += cost_inputs[j];
+                        j += 1;
+                }
+
         }
 
 
