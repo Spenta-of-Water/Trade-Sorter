@@ -63,7 +63,14 @@ import view.sett.ui.room.Modules.ModuleMaker;
 import static java.lang.Math.max;
 
 final class ModuleIndustry implements ModuleMaker {
-
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	/// #!# This adds the profit on a building, specifying each cost and revenue and calculating profit per person.
+	/// #!# This needs serious work to separate from Jake's code and update to look nicer
+	/// #!# Make 2 values: For Self, and For Sale -
+	/// For Self: use the value of a good instead of the sale price
+	/// For Sale: use the sale price like it currently is
+	/// #!# Have a hover over UI for each to describe the costs and revenues.
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final GChart chart = new GChart();
 	private final boolean[] rCheck = new boolean[RESOURCES.ALL().size()];
 	private final boolean[] rHas = new boolean[RESOURCES.ALL().size()];
@@ -85,10 +92,10 @@ final class ModuleIndustry implements ModuleMaker {
 	private static CharSequence ¤¤ConsumedPrevious = "¤Consumed last year";
 
 	private static CharSequence ¤¤NoStore = "¤Internal storage is full and production is stalled. Have a warehouse fetch the produce.";
-
+	////#!#
 	private static CharSequence Profit = "Yesterday's Profit";
 	private static CharSequence ProfitDesc = "Estimation of daily profit when buying resources";
-
+	///#!#
 	public ModuleIndustry(Init init) {
 		D.t(this);
 
@@ -548,7 +555,7 @@ final class ModuleIndustry implements ModuleMaker {
 				section.addRelBody(4, DIR.S, all);
 			}
 
-			// Add profit panel
+			// #!# Add profit panel
 			{
 				GuiSection all = new GuiSection();
 
@@ -866,7 +873,7 @@ final class ModuleIndustry implements ModuleMaker {
 		return s;
 	}
 
-
+	/////////////////////////////////////////////#!# Profit calculation's output costs
 	private static RENDEROBJ profitOut(GETTER<RoomInstance> get) {
 		GuiSection s = new GuiSection();
 
@@ -927,7 +934,7 @@ final class ModuleIndustry implements ModuleMaker {
 		s.addRelBody(2, DIR.N, t);
 		return s;
 	}
-
+	/////////////////////////////////////////////#!# Tool calculation
 	private static RENDEROBJ profitTools(GETTER<RoomInstance> get) {
 		GuiSection s = new GuiSection();
 
@@ -964,7 +971,7 @@ final class ModuleIndustry implements ModuleMaker {
 		s.addRelBody(2, DIR.N, t);
 		return s;
 	}
-
+/////////////////////////////////////////////#!# Maintenance calculation
 	private static RENDEROBJ profitMaintenance(GETTER<RoomInstance> get) {
 		GuiSection s = new GuiSection() {
 
@@ -1010,7 +1017,7 @@ final class ModuleIndustry implements ModuleMaker {
 		s.addRelBody(2, DIR.N, t);
 		return s;
 	}
-
+	/////////////////////////////////////////////#!# Profit Total
 	private static RENDEROBJ profitTotal(GETTER<RoomInstance> get) {
 		GuiSection s = new GuiSection();
 
@@ -1076,6 +1083,7 @@ final class ModuleIndustry implements ModuleMaker {
 		s.addRelBody(2, DIR.N, t);
 		return s;
 	}
+	/////////////////////////////////////////////#!# Profit calculation per person
 	private static RENDEROBJ profitpp(GETTER<RoomInstance> get) {
 		GuiSection s = new GuiSection();
 

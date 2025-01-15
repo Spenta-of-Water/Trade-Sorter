@@ -1,35 +1,23 @@
 package view.ui.goods;
 
 import game.faction.FACTIONS;
-import game.time.TIME;
-import init.race.RACES;
-import init.race.Race;
 import init.resources.RESOURCE;
 import init.resources.RESOURCES;
 import init.sprite.SPRITES;
 import init.sprite.UI.UI;
-import init.type.HCLASS;
-import init.type.HCLASSES;
-import init.type.NEEDS;
 import settlement.main.SETT;
-import settlement.maintenance.ROOM_DEGRADER;
-import settlement.room.main.RoomBlueprint;
-import settlement.room.main.RoomBlueprintIns;
-import settlement.room.main.RoomInstance;
 import settlement.room.industry.module.RoomProduction;
-import settlement.stats.STATS;
 import snake2d.util.gui.GuiSection;
 import snake2d.util.sets.ArrayListGrower;
 import util.gui.misc.GText;
 import util.gui.table.GScrollRows;
 import util.info.GFORMAT;
 import view.ui.manage.IFullView;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
-import static settlement.main.SETT.ROOMS;
+/////////////////////////////////////////////#!# This is a unique file that doesn't overwrite any of Jake's files.
+/////#!# Displays all the PROD.producers and is relied upon by UITreasury for the consumers and producers values
 
 public final class UIProduction extends IFullView {
 
@@ -154,5 +142,45 @@ public final class UIProduction extends IFullView {
                         tab += n;
                         return (int) (t * MARGIN * 10);
                 }
+        }
+        public static double production() {
+                double tot = 0;
+                for (RESOURCE res : RESOURCES.ALL()) {
+                        for (RoomProduction.Source rr : SETT.ROOMS().PROD.producers(res)) {
+                                if (rr.am() == 0) {continue;}
+                                tot += rr.am() * FACTIONS.PRICE().get(res) ;
+                        }
+                }
+                return tot;
+        }
+        public static double consumption() {
+                double tot = 0;
+                for (RESOURCE res : RESOURCES.ALL()) {
+                        for (RoomProduction.Source rr : SETT.ROOMS().PROD.consumers(res)) {
+                                if (rr.am() == 0) {continue;}
+                                tot -= rr.am() * FACTIONS.PRICE().get(res) ;
+                        }
+                }
+                return tot;
+        }
+
+        public static double net() {
+                double tot = 0;
+                for (RESOURCE res : RESOURCES.ALL()) {
+                        double subtot = 0; // number of resources
+                        for (RoomProduction.Source rr : SETT.ROOMS().PROD.producers(res)) {
+                                if (rr.am() == 0) {continue;}
+                                subtot += rr.am() ;
+                        }
+                        for (RoomProduction.Source rr : SETT.ROOMS().PROD.consumers(res)) {
+                                if (rr.am() == 0) {continue;}
+                                subtot -= rr.am() ;
+                        }
+                        // use sell price if net positive, buy price if net negative.
+                        if (subtot>0){tot+=subtot * FACTIONS.player().trade.pricesSell.get(res); }
+                        if (subtot<0){tot+=subtot * FACTIONS.player().trade.pricesBuy.get(res); }
+
+                }
+                return tot;
         }
 }

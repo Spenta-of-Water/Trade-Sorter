@@ -26,6 +26,9 @@ import util.info.GFORMAT;
 import view.sett.ui.room.Modules.ModuleMaker;
 
 final class ModuleDegrade implements ModuleMaker {
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	///#!# Building Maintenance now includes the denari value for the annual maintenance estimate
+	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private final CharSequence ¤¤DEGRADE_AVE = "¤Average degradation amongst these rooms. Degradation affects a room negatively.";
 
@@ -208,7 +211,7 @@ final class ModuleDegrade implements ModuleMaker {
 					b.tab(6);
 					b.add(GFORMAT.f(b.text(), tot, 2));
 
-
+/////////////////////////////////////////////////////////#!#
 					// Maintenance costs in denars!
 					b.sep();
 					b.textLL("Maintenance cost in denars if imported:");
@@ -233,7 +236,7 @@ final class ModuleDegrade implements ModuleMaker {
 					b.textLL(" $");
 					b.sep();
 					b.NL(8);
-
+/////////////////////////////////////////////////////////#!#
 
 
 				}

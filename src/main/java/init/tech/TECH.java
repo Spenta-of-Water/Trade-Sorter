@@ -1,5 +1,7 @@
 package init.tech;
 
+import java.io.IOException;
+
 import game.boosting.BoostSpecs;
 import game.faction.FACTIONS;
 import game.faction.Faction;
@@ -21,10 +23,9 @@ import util.info.INFO;
 import view.ui.tech.Node_Extra;
 import world.map.regions.Region;
 
-import java.io.IOException;
-
 public final class TECH implements INDEXED{
-	////////////////////////////////////////////////////////////////#!# The only added line!!!
+	////////////////////////////////////////////////////////////////#!# The only added lines!!!
+	//#!# This adds the cost benefit analysis and tech tree display to each tech individually
 	public CostBenefit Tech_CostBenefit = new CostBenefit(this);
 	public Node_Extra Extra = new Node_Extra();
 	////////////////////////////////////////////////////////////////#!#
@@ -34,8 +35,8 @@ public final class TECH implements INDEXED{
 	public final int costTotal;
 	public final double levelCostInc;
 //	public final double levelCostMulInc;
-	
-	
+
+
 	private LIST<TechRequirement> needs;
 	private LIST<TechRequirement> needsPruned;
 	private final INFO info;
@@ -43,9 +44,9 @@ public final class TECH implements INDEXED{
 	public final BoostSpecs boosters;
 	public final Lockable<Faction> plockable;
 	public final Lockers lockers;
-	
+
 	private SPRITE icon = null;
-	
+
 	public final String key;
 	public final TechTree tree;
 	public final double AIAmount;
@@ -72,7 +73,7 @@ public final class TECH implements INDEXED{
 		plockable = GVALUES.FACTION.LOCK.push();
 		plockable.push(data);
 		lockers = new Lockers(Dic.¤¤TechnologyShort + ": " + info.name, UI.icons().s.vial);
-		
+
 		lockers.add(GVALUES.FACTION, data, new DOUBLE_O<Faction>() {
 
 			@Override
@@ -84,9 +85,9 @@ public final class TECH implements INDEXED{
 				}
 				return 1;
 			}
-		
+
 		});
-		
+
 		lockers.add(GVALUES.INDU, data, new DOUBLE_O<Induvidual>() {
 
 			@Override
@@ -98,9 +99,9 @@ public final class TECH implements INDEXED{
 				}
 				return 1;
 			}
-		
+
 		});
-		
+
 		lockers.add(GVALUES.REGION, data, new DOUBLE_O<Region>() {
 
 			@Override
@@ -112,44 +113,44 @@ public final class TECH implements INDEXED{
 				}
 				return 1;
 			}
-		
+
 		});
-		
+
 		boosters = new BoostSpecs(info.name, UI.icons().s.vial, false);
 		boosters.read(data, null);
-		
+
 		if (data.has("ICON"))
 			icon = UI.icons().get(data).huge;
-		
+
 		requires = data;
-		
+
 		data.has("REQUIRES_TECH_LEVEL");
-		
+
 		data.checkUnused();
-		
+
 	}
 
 	@Override
 	public int index() {
 		return index;
 	}
-	
+
 	public LIST<TechRequirement> requires(){
 		return needs;
 	}
-	
+
 	public LIST<TechRequirement> requiresNodes(){
 		return needsPruned;
 	}
-	
+
 	void set(LIST<TechRequirement> needs) {
 		this.needs = needs;
 	}
-	
+
 	void prune(LIST<TechRequirement> needs) {
 		this.needsPruned = needs;
 	}
-	
+
 	public boolean requires(TECH other, int level) {
 		if (other == this)
 			return false;
@@ -161,24 +162,24 @@ public final class TECH implements INDEXED{
 		}
 		return false;
 	}
-	
+
 	public SPRITE icon() {
 		if (icon == null) {
 			icon = TechIcon.icon(this);
 		}
 		return icon;
 	}
-	
+
 	public static final class TechRequirement {
-		
+
 		public final TECH tech;
 		public final int level;
-		
+
 		TechRequirement(TECH t, int l) {
 			this.tech = t;
 			this.level = l;
 		}
-		
+
 		@Override
 		public boolean equals(Object obj) {
 			if (obj instanceof TechRequirement) {
@@ -187,15 +188,15 @@ public final class TECH implements INDEXED{
 			}
 			return false;
 		}
-		
+
 	}
-	
+
 	public CharSequence name() {
 		return info.name;
 	}
-	
+
 	public CharSequence desc() {
 		return info.desc;
 	}
-	
+
 }

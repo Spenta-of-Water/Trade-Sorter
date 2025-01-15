@@ -13,10 +13,10 @@ import settlement.room.main.RoomInstance;
 import settlement.room.main.employment.RoomEmploymentIns;
 import settlement.room.main.employment.RoomEmploymentSimple;
 import settlement.room.main.employment.RoomEquip;
-
-import static game.time.TIME.playedGame;
 import static settlement.main.SETT.*;
 
+/////////////////////////////////////////////#!# This is a unique file that doesn't overwrite any of Jake's files.
+/////#!# This calculates the costs of gaining tech currencies
 public class Knowledge_Costs {
         private static double CUR_TIME = 0;
         private static int index = -1;
@@ -42,15 +42,13 @@ public class Knowledge_Costs {
         }
         public static void costs()
         {
-                if (CUR_TIME == playedGame()){return;}
-                CUR_TIME = playedGame();
                 setup(); // Set up the variables for the correct lengths
                 ////////////////////////////////////////////////////////////////////////////////////////
                 // For each tech currency, determine the worker and material cost value
 
                 index = 0;
                 for ( PTech.TechCurr tech_value : FACTIONS.player().tech().currs() ){ // For each type of tech
-                        know_tot[index] = tech_value.total();  // Check the knowledge total directly -- but gives ALL sources like titles :C
+                        know_tot[index] = 0;  // Check the knowledge total directly -- but gives ALL sources like titles :C
 
                         // Check the employment by checking every building for a room instance that has that boostable
                         for (int y = 0; y < THEIGHT; y++) {
@@ -68,7 +66,7 @@ public class Knowledge_Costs {
                                         RoomInstance r = (RoomInstance) room;              // Room instance variable
                                         if (r.employees() == null) { continue; }
                                         know_emp[index]  += (double) r.employees().employed() / r.area(); //  employment divided by the area of the room
-
+                                        know_tot[index]  += admin_room.admin().value()  / r.area() ;
                                         // INPUT COSTS
                                         if (room instanceof ROOM_PRODUCER){
                                                 ROOM_PRODUCER s = ((ROOM_PRODUCER) room);

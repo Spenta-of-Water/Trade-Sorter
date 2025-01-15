@@ -10,7 +10,6 @@ import game.time.TIME;
 import game.values.Lock;
 import init.resources.RESOURCE;
 import init.resources.RESOURCES;
-import init.sprite.UI.UI;
 import init.type.POP_CL;
 import settlement.entity.humanoid.Humanoid;
 import settlement.main.SETT;
@@ -25,20 +24,16 @@ import settlement.room.main.employment.RoomEquip;
 import settlement.stats.STATS;
 import snake2d.util.color.COLOR;
 import snake2d.util.color.ColorImp;
-import util.colors.GCOLOR;
-import util.gui.misc.GBox;
-import util.gui.misc.GText;
-import util.info.GFORMAT;
 import view.keyboard.KEYS;
-import view.ui.tech.Node_Extra;
-
 import java.util.Objects;
-
 import static game.time.TIME.playedGame;
 import static init.tech.Knowledge_Costs.cost_inputs;
 import static init.tech.Knowledge_Costs.know_worker;
 import static settlement.main.SETT.*;
 
+
+/////////////////////////////////////////////#!# This is a unique file that doesn't overwrite any of Jake's files.
+///#!#! This calculates the benefits of each tech's bonuses
 public class CostBenefit {
 
         double CUR_TIME = 0;
@@ -64,6 +59,8 @@ public class CostBenefit {
 
         // Create the Green-Yellow-Red color for nodes based on the cost/benefit
         public COLOR col (boolean hovered, TECH tech){
+                boolean maxed = FACTIONS.player().tech.level(tech) == tech.levelMax;
+                if (maxed){ return new ColorImp(10, 120, 120); }
                 benefits = tech.Tech_CostBenefit.benefits;
                 costs = tech.Extra.worker_cost;
                 double shade_val = hovered ? 1 : .6;
@@ -94,7 +91,7 @@ public class CostBenefit {
 
         public void update(TECH tech){
                 // Only run this if you haven't lately.
-                if (CUR_TIME == playedGame()){return;}
+                if (CUR_TIME == playedGame() && !( KEYS.MAIN().MOD.isPressed() )){return;}
                 CUR_TIME = playedGame();
                 Knowledge_Costs.costs();
                 booster_benefits(tech);
@@ -310,7 +307,7 @@ public class CostBenefit {
 
 
 
-        static private double next_tech_benefit(BoostSpec bb){
+        public static double next_tech_benefit(BoostSpec bb){
                 double cur = 0;
                 for ( Boostable A : BOOSTABLES.CIVICS().all() ) {
                         if (Objects.equals(bb.boostable.key(), A.key)) {
@@ -323,42 +320,6 @@ public class CostBenefit {
 
                 return 100 * (1 - v/w);
         }
-        public double tech_divisor_presentation(String what, double denari_costs, BoostSpec bb, GBox b) {
-                double tech_benefit = next_tech_benefit(bb); // % of maintenance you'll still have, e.g. 20% reduction from current tech level
-                b.sep();
-                if (Objects.equals(what, "spoilage")){
-                        b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Note: Spoilage estimates assume spoilage was in a hauler or warehouse"));
-                        b.NL();
-                }
-                if (KEYS.MAIN().UNDO.isPressed()) {
 
-                        b.add(GFORMAT.f(new GText(UI.FONT().S, 0), 1/( 1+ FACTIONS.player().tech.level(tech) * bb.booster.to() ) ) );
-                        b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "%"));   b.tab(2);
-                        b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Current percent from this tech"));
-                        b.NL();
-
-                        b.add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) Math.ceil(denari_costs)));
-                        b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "$"));   b.tab(2);
-                        b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Cost of all ".concat(what)));
-                        b.NL();
-                        b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(tech_benefit * 100) / 100, 2).color(GCOLOR.T().IGOOD));
-                        b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "%"));   b.tab(2);
-                        b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Percent reduction from this tech"));
-                        b.NL();
-
-                        b.add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long) Math.ceil(-denari_costs * tech_benefit/ costs/100)));
-                        b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "$"));   b.tab(2);
-                        b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Estimated ".concat(what).concat(" benefits per worker")));
-                        b.NL();
-
-                        b.sep();
-                        b.add(GFORMAT.iIncr(new GText(UI.FONT().S, 0), (long)  ( ( -denari_costs * tech_benefit/100 + cost_tot * costs) / costs ) ) );
-                        //  ( (-Amount of money saved)  + (costs per worker * # of tech workers) )/ # of tech workers
-                        b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "$"));   b.tab(2);
-                        b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Cost-Benefit per knowledge worker from this tech"));
-                        b.NL();
-                }
-                return -denari_costs * tech_benefit/100;
-        }
 
 }

@@ -40,14 +40,19 @@ import view.ui.goods.UIMaintenance;
 import view.ui.goods.UIProduction;
 import view.ui.goods.UIRecipes;
 import view.ui.goods.UIValues;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///#!# Updates the front facing UI to add 5 buttons for Expenses, Production, Recipes, Values, and Maintenance
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 public final class IManager {
-    // The tabs being added
+    // #!# The tabs being added
     private final UIRecipes recipes;
     private final UIValues values;
     private final UIMaintenance all_maintenance;
     private final UIExpenses all_expenses;
     private final UIProduction all_production;
-
+    ////////////////////////////
     public static final int TOP_HEIGHT = 48;
 
     private final GuiSection top = new GuiSection();
@@ -64,7 +69,7 @@ public final class IManager {
         all.add(view.level);
         all.add(view.profile);
 
-        // The tabs being added
+        // #!# The tabs being added
         recipes = new UIRecipes();
         all.add(recipes);
 
@@ -79,7 +84,7 @@ public final class IManager {
 
         all_production = new UIProduction();
         all.add(all_production);
-
+        ////////////////////////////
         for (IFullView w : all) {
 
             GButt.ButtPanel b = new GButt.ButtPanel(w.icon) {
@@ -298,7 +303,8 @@ public final class IManager {
             }
         });
 
-        // The icons being added to the main UI screen:
+        ///////////////////////////////////////////////////
+        // #!# The icons being added to the main UI screen:
         bAdd(s, i++, all_maintenance, UI.icons().s.degrade, new GStat() {
 
             @Override
@@ -325,6 +331,8 @@ public final class IManager {
 
 
     }
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    /// #!# Add UI elements and change the side for rendering iconsfrom 74 to 24 for 16x16 pixel icons
     public double maint_value() {
         //double import_costs = 0;
         double value_costs = 0;
@@ -348,6 +356,7 @@ public final class IManager {
         s.add(ren, (i/2)*24, 24*((i%2)));
 
     }
+    ////////////////////////////////////////////////////////////////////////////////////
     private void bAdd(GuiSection s, int i, IFullView v, SPRITE icon, SPRITE vv) {
         CLICKABLE p = bb(v, icon, vv);
         bAdd(s, i, p);

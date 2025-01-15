@@ -2,7 +2,7 @@ package view.ui.goods;
 
 import game.faction.FACTIONS;
 import init.sprite.UI.UI;
-import init.text.D;
+
 import settlement.room.industry.module.INDUSTRY_HASER;
 import settlement.room.industry.module.Industry;
 import settlement.room.main.RoomBlueprint;
@@ -12,8 +12,9 @@ import util.gui.misc.GText;
 import util.gui.table.GScrollRows;
 import util.info.GFORMAT;
 import view.ui.manage.IFullView;
-
 import static settlement.main.SETT.ROOMS;
+/////////////////////////////////////////////#!# This is a unique file that doesn't overwrite any of Jake's files.
+/////#!# Displays all recipes and uses the Buy and Sell Price
 
 public final class UIRecipes extends IFullView {
 

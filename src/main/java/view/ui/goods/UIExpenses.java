@@ -16,7 +16,8 @@ import view.ui.manage.IFullView;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-
+/////////////////////////////////////////////#!# This is a unique file that doesn't overwrite any of Jake's files.
+/////#!# Displays all the PROD.consumers
 
 public final class UIExpenses extends IFullView {
 

@@ -34,7 +34,10 @@ import view.keyboard.KEYS;
 import view.main.VIEW;
 
 final class Node extends ClickableAbs {
-
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	///#!# Tells tech to update the cost analysis and then displays the output form Node_Extra.
+	///#!# Changes the color when they hover over it, but IDK why it won't update otherwise.
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	public final static int WIDTH = 92;
 	public final static int HEIGHT = 92+12;
 	private static final COLOR Cdormant = COLOR.WHITE100.shade(0.3);
@@ -330,9 +333,7 @@ final class Node extends ClickableAbs {
 				tt.add(¤¤workValue).insert(0, tot, 2);
 				b.add(tt);
 
-				/////////////////////////////////////#!#
-				tech.Extra.output(tech, b);
-				/////////////////////////////////////#!#
+
 
 			}
 			b.NL(8);
@@ -360,6 +361,9 @@ final class Node extends ClickableAbs {
 
 			}
 		}
+		/////////////////////////////////////#!#
+		tech.Extra.output(tech, b);
+		/////////////////////////////////////#!#
 
 	}
 	
