@@ -34,7 +34,7 @@ import view.keyboard.KEYS;
 import view.keyboard.KeyButt;
 import view.main.VIEW;
 import view.ui.UIView;
-// Import the tabs code
+// #!# Import the tabs code
 import view.ui.goods.UIExpenses;
 import view.ui.goods.UIMaintenance;
 import view.ui.goods.UIProduction;

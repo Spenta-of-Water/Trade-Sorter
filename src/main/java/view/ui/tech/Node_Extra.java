@@ -11,10 +11,7 @@ import util.gui.misc.GBox;
 import util.gui.misc.GText;
 import util.info.GFORMAT;
 import view.keyboard.KEYS;
-import view.ui.goods.UIMaintenance;
-
 import java.util.Objects;
-
 import static init.tech.CostBenefit.*;
 import static init.tech.Knowledge_Costs.*;
 import static view.ui.goods.UIMaintenance.sum_d;
@@ -210,8 +207,8 @@ public class Node_Extra{
                         if (!(sum_d(cost_maint) == 0 && sum_d(cost_tools) == 0 && sum_d(cost_inputs) == 0 && cost_tot == 0)) {
                                 b.sep();
                         }
-                        if (sum_d(cost_maint) != 0) {
-                                b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) Math.ceil(sum_d(cost_maint) * 10) / 10, 1).color(GCOLOR.T().IBAD));
+                        if (sum_d(cost_maint) != 0) {// If sum of employment array isn't 0, maint/emp sums to 1 decimal or display 0
+                                b.add(GFORMAT.f(new GText(UI.FONT().S, 0), (double) (sum_d(know_emp)!=0 ? Math.ceil(sum_d(cost_maint)/sum_d(know_emp) * 10)  / 10 : 0), 1).color(GCOLOR.T().IBAD));
                                 b.add(GFORMAT.text(new GText(UI.FONT().S, 0), "Maintenance costs per knowledge worker"));
                                 b.NL();
                         }

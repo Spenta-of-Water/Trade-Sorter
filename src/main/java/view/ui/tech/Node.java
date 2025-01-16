@@ -362,6 +362,7 @@ final class Node extends ClickableAbs {
 			}
 		}
 		/////////////////////////////////////#!#
+		tech.Tech_CostBenefit.update(tech); // #!# Update tech's Cost Benefits
 		tech.Extra.output(tech, b);
 		/////////////////////////////////////#!#
 

@@ -18,7 +18,7 @@ import static settlement.main.SETT.*;
 /////////////////////////////////////////////#!# This is a unique file that doesn't overwrite any of Jake's files.
 /////#!# This calculates the costs of gaining tech currencies
 public class Knowledge_Costs {
-        private static double CUR_TIME = 0;
+
         private static int index = -1;
         // for each tech currency
         public static double [] know_tot    ;// total value the player has
@@ -30,7 +30,7 @@ public class Knowledge_Costs {
         public static double [] cost_tools  ;// tools costs
 
         private static void setup() {
-//                if (index > 0) return;
+
                 index = FACTIONS.player().tech().currs().size();
                 know_tot    = new double[index];  	// total value the player has
                 know_emp    = new double[index]; 	// employment in buildings that give this currency
@@ -66,7 +66,8 @@ public class Knowledge_Costs {
                                         RoomInstance r = (RoomInstance) room;              // Room instance variable
                                         if (r.employees() == null) { continue; }
                                         know_emp[index]  += (double) r.employees().employed() / r.area(); //  employment divided by the area of the room
-                                        know_tot[index]  += admin_room.admin().value()  / r.area() ;
+                                        know_tot[index]   = admin_room.admin().value()   ;  // Will have issues if a mod has multiple buildings for the same tech currency.
+//                                        know_tot[index]  += admin_room.admin().value()  / r.area() ; // It takes all of this industry not just the instance.
                                         // INPUT COSTS
                                         if (room instanceof ROOM_PRODUCER){
                                                 ROOM_PRODUCER s = ((ROOM_PRODUCER) room);

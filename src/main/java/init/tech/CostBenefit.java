@@ -36,7 +36,7 @@ import static settlement.main.SETT.*;
 ///#!#! This calculates the benefits of each tech's bonuses
 public class CostBenefit {
 
-        double CUR_TIME = 0;
+        double CUR_TIME = -1;
         // Old Variables for reference
         public static double cost_tot = 0; 	// total costs (tools + maint atm) per person
 
