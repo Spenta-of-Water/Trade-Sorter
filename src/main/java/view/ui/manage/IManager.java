@@ -288,9 +288,18 @@ public final class IManager {
             @Override
             public void update(GText text) {
                 int am = Integer.MAX_VALUE;
-                for (TechCurr c : GAME.player().tech.currs())
+                int bm = Integer.MIN_VALUE; //IDK why it's not just 0, it'll be overwritten anyway
+                for (TechCurr c : GAME.player().tech.currs()) {
                     am = Math.min(am, c.available());
-                GFORMAT.i(text, am);
+                    bm = Math.max(bm, c.available());
+                }
+                if (am < 0){
+                    GFORMAT.i(text, am);
+                }
+                else{
+                    GFORMAT.i(text, bm);
+                }
+
             }
         });
 

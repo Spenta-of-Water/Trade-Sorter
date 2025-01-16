@@ -35,10 +35,14 @@ public class Node_Extra{
                 int j = 0;
                 worker_cost   = 0;
                 for (TechCost c : tech.costs) {
-                        if(know_worker[j] != 0)  { worker_cost += c.amount / know_worker[j]; }
+                        PTech t = FACTIONS.player().tech();
+                        int cost = t.costLevelNext(c.amount, tech);
+                        worker_cost += cost;
                         // For each tech currency: Tech cost / knowledge per worker
                         j += 1;
                 }
+                worker_cost = (sum_d(know_worker) != 0) ? worker_cost/sum_d(know_worker) : 0;
+
 
                 // Calculate the benefit of a technology based on the "benefit"
                 int i = 0;
