@@ -34,6 +34,11 @@ public class Node_Extra{
                 // Calculate the total costs and benefits for simplification
                 int j = 0;
                 worker_cost   = 0;
+
+                if (tech.costs == null){return;}
+                if (FACTIONS.player() == null){return;}
+                if (FACTIONS.player().tech == null){return;}
+
                 for (TechCost c : tech.costs) {
                         PTech t = FACTIONS.player().tech();
                         int cost = t.costLevelNext(c.amount, tech);
