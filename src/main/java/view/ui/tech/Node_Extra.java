@@ -90,16 +90,18 @@ public class Node_Extra{
                 //////////////////////////////////////////////////////////////////////////////////////
                 tech.Tech_CostBenefit.update(tech);
 
-                b.NL();
-                b.add(GFORMAT.f(b.text(), tech.Tech_CostBenefit.benefits, 1));
-                b.tab(2);
-                b.add(GFORMAT.text(b.text(), "Production worker Benefit"));
 
-                b.NL();
-                b.add(GFORMAT.f(b.text(), tech.Tech_CostBenefit.benefit_tot, 1));
-                b.tab(2);
-                b.add(GFORMAT.text(b.text(), "Cost of production upkeep per worker"));
+                if ( tech.Tech_CostBenefit.benefits >0 ){
+                        b.NL();
+                        b.add(GFORMAT.f(b.text(), tech.Tech_CostBenefit.benefits, 1));
+                        b.tab(2);
+                        b.add(GFORMAT.text(b.text(), "Production worker Benefit"));
 
+                        b.NL();
+                        b.add(GFORMAT.f(b.text(), tech.Tech_CostBenefit.benefit_tot, 1));
+                        b.tab(2);
+                        b.add(GFORMAT.text(b.text(), "Cost of production upkeep per worker"));
+                }
                 //////////////////////////////////////////////////////////////////////////////////////
                 /////////      If pressing shift       ///////////////////////////////////////////////
                 //////////////////////////////////////////////////////////////////////////////////////

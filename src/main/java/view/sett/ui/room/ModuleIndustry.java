@@ -16,11 +16,8 @@ import settlement.main.SETT;
 import settlement.maintenance.ROOM_DEGRADER;
 import settlement.misc.job.JOBMANAGER_HASER;
 import settlement.misc.util.RESOURCE_TILE;
-import settlement.room.industry.module.INDUSTRY_HASER;
-import settlement.room.industry.module.Industry;
+import settlement.room.industry.module.*;
 import settlement.room.industry.module.Industry.IndustryResource;
-import settlement.room.industry.module.IndustryUtil;
-import settlement.room.industry.module.ROOM_PRODUCER;
 import settlement.room.main.Room;
 import settlement.room.main.RoomBlueprint;
 import settlement.room.main.RoomBlueprintIns;
@@ -41,7 +38,6 @@ import snake2d.util.sets.LISTE;
 import snake2d.util.sets.LinkedList;
 import snake2d.util.sets.Stack;
 import snake2d.util.sprite.text.Str;
-import util.colors.GCOLOR;
 import util.data.GETTER;
 import util.dic.Dic;
 import util.dic.DicTime;
@@ -60,7 +56,7 @@ import util.statistics.HISTORY_INT;
 import view.main.VIEW;
 import view.sett.ui.room.Modules.ModuleMaker;
 
-import static java.lang.Math.max;
+import static java.lang.Math.*;
 
 final class ModuleIndustry implements ModuleMaker {
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -92,10 +88,134 @@ final class ModuleIndustry implements ModuleMaker {
 	private static CharSequence ¤¤ConsumedPrevious = "¤Consumed last year";
 
 	private static CharSequence ¤¤NoStore = "¤Internal storage is full and production is stalled. Have a warehouse fetch the produce.";
-	////#!#
-	private static CharSequence Profit = "Yesterday's Profit";
-	private static CharSequence ProfitDesc = "Estimation of daily profit when buying resources";
-	///#!#
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////#!#
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////#!#
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////#!#
+	private static CharSequence Profit1 = "Yesterday's Profit";
+	private static CharSequence Profit2 = "Yesterday's Value added";
+	private static CharSequence Profit3 = "Profit per person";
+	double revenue;  // price if you sell it
+	double saved;    // price if you were to buy it
+	double weighted_average;
+	double percent_for_self;
+	double consumed;
+	double produced;
+	double inputs;
+	double tools;
+	double maintenance;
+	double profit1; // Profit per room
+	double profit2;
+	double profit3; // weighted average version
+	double ppp1; // Profit per person for sale
+	double ppp2; // Profit per person for self
+	double ppp3; // Profit per person for weighted average
+
+	private void refresh(GETTER<RoomInstance> get){
+		ROOM_PRODUCER p = ((ROOM_PRODUCER) g(get));
+		RoomInstance ins = get.get();
+		//////////////////////////////////////////////////////////////////////
+		// "Revenue" or "Money saved" / value added
+		revenue =0;  // Revenue "for trade"
+		saved =0;    // Revenue "for self"
+		weighted_average= 0; // Revenue depending on actual consumption
+
+		for(int ri = 0; ri<p.industry().outs().size();ri++){
+			IndustryResource i = p.industry().outs().get(ri);
+			double n = i.dayPrev.get(p);
+
+			double sellFor = FACTIONS.player().trade.pricesSell.get(i.resource);
+			revenue += n * sellFor;
+
+			double sellFor2 = FACTIONS.player().trade.pricesBuy.get(i.resource);
+			saved += n * sellFor2;
+
+			consumed = 0;
+			produced = 0;
+			// consumed / produced = quantities of the resource for *this* resource
+			// tot_consumed / tot_produced = total of resource quantities and average value of the resource
+			for (RoomProduction.Source rr : SETT.ROOMS().PROD.consumers(i.resource)) {
+				consumed += rr.am();
+			}
+			for (RoomProduction.Source rr : SETT.ROOMS().PROD.producers(i.resource)) {
+				produced += rr.am();
+			}
+
+			// Price of goods based on amount for self or sale
+			weighted_average +=
+			// Percent for self
+				(  min((consumed/produced),1)) * n * sellFor2 +
+			// Percent for sale
+				(1 - min((consumed/produced),1)) * n * sellFor;
+
+		}
+		//////////////////////////////////////////////////////////////////////
+		// Input materials
+		inputs =0;  // Input materials costs
+		if (p.industry().ins() != null) {
+			for (int ri = 0; ri < p.industry().ins().size(); ri++) {
+				IndustryResource i = p.industry().ins().get(ri);
+				double n = i.dayPrev.get(p);
+				double sellFor = FACTIONS.player().trade.pricesBuy.get(i.resource);
+				inputs -= n * sellFor;
+			}
+		}
+		//////////////////////////////////////////////////////////////////////
+		// Tools cost!
+		tools =0; // Tools costs
+		if(ins.blueprint().employment() !=null){
+
+			RoomEmploymentSimple ee = ins.blueprint().employment();
+			RoomEmploymentIns e = ins.employees();
+
+			for (RoomEquip w : ee.tools()) {
+				double n = w.degradePerDay * e.tools(w);
+				double sellFor = FACTIONS.player().trade.pricesBuy.get(w.resource);
+				tools -= n * sellFor;
+			}
+		}
+		//////////////////////////////////////////////////////////////////////
+		// Maintenance calculation!
+		ROOM_DEGRADER deg = get.get().degrader(get.get().mX(), get.get().mY());
+		double iso = ins.isolation(get.get().mX(), get.get().mY());
+		double boost = SETT.MAINTENANCE().speed();
+
+		maintenance =0;
+		if (ins.blueprintI().degrades()) {
+			for (int i = 0; i < deg.resSize(); i++) {
+				if (deg.resAmount(i) <= 0)
+					continue;
+				RESOURCE res = deg.res(i);
+
+				double n = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, deg.resAmount(i)) * TIME.years().bitConversion(TIME.days()) / 16.0;
+				double sellFor = FACTIONS.player().trade.pricesBuy.get(res);
+				maintenance -= n * sellFor;
+			}
+		}
+		//////////////////////////////////////////////////////////////////////
+		// Total Profit
+		profit1 = revenue          + inputs + tools + maintenance;
+		profit2 = saved            + inputs + tools + maintenance;
+		profit3 = weighted_average + inputs + tools + maintenance;
+		// weighted average revenue = A * saved + (1-A) * revenue
+		// Where A is the percent used for self and 1-A is percent used for sale
+
+//		AVG = A * saved + (1-A) * revenue
+//		AVG = A * saved + revenue - A * revenue
+//		AVG - revenue = A * saved - A * revenue
+//		(AVG - revenue) = A * ( saved - revenue)
+//		(AVG - revenue) /  ( saved - revenue) = A
+
+		percent_for_self =  (weighted_average - revenue) / (saved - revenue);
+		RoomEmploymentIns e = ins.employees();
+		double employedBLD = max(1, e.employed());
+		ppp1 = profit1 / employedBLD;
+		ppp2 = profit2 / employedBLD;
+		ppp3 = profit3 / employedBLD;
+	}
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////#!#
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////#!#
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////#!#
 	public ModuleIndustry(Init init) {
 		D.t(this);
 
@@ -471,45 +591,6 @@ final class ModuleIndustry implements ModuleMaker {
 			}
 		}
 
-
-//		@Override
-//		public void problem(GBox box, Room rr, int rx, int ry) {
-//			ROOM_PRODUCER p = ((ROOM_PRODUCER) rr);
-//			if (p.industry().outs().size() == 0)
-//				return;
-//
-//			RoomInstance room = (RoomInstance) rr;
-//
-//			Arrays.fill(rCheck, false);
-//			Arrays.fill(rHas, false);
-//			for (COORDINATE c : room.body()) {
-//				if (room.is(c)) {
-//					RESOURCE_TILE t = room.resourceTile(c.x(), c.y());
-//					if (t != null && t.resource() != null) {
-//						rCheck[t.resource().index()] = true;
-//						if (t.hasRoom())
-//							rHas[t.resource().index()] = true;
-//					}
-//				}
-//			}
-//
-//			boolean title = false;
-//
-//
-//			for (RESOURCE r : RESOURCES.ALL()) {
-//				if (rCheck[r.index()] && !rHas[r.index()]) {
-//					if (!title) {
-//						title = true;
-//						box.NL(8);
-//						box.add(box.text().errorify().add(¤¤NoStore));
-//						box.NL();
-//					}
-//
-//					box.add(r.icon());
-//				}
-//			}
-//		}
-
 		@Override
 		public void appendPanel(GuiSection section, GETTER<RoomInstance> get, int x1, int y1) {
 
@@ -554,47 +635,170 @@ final class ModuleIndustry implements ModuleMaker {
 
 				section.addRelBody(4, DIR.S, all);
 			}
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////#!#
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////#!#
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////#!#
 
-			// #!# Add profit panel
+			// #!# Add profit panel1
 			{
-				GuiSection all = new GuiSection();
+				GuiSection all = new GuiSection() {
+					public void hoverInfoGet(GUI_BOX text) {
+						GBox b = (GBox) text;
+						refresh(get);
 
-				if (resOut > 0) {
-					RENDEROBJ s = profitOut(get);
-					all.addDownC(2, s);
-				}
+						b.textLL("Profit from buying inputs and selling outputs");
+						b.NL();
+						b.add(GFORMAT.text(b.text(), "Revenue"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) revenue));
+						b.NL();
 
-				if (resIn > 0) {
-					RENDEROBJ s = profitIn(get);
-					all.addDownC(2, s);
-				}
+						b.add(GFORMAT.text(b.text(), "Input costs"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) inputs));
+						b.NL();
 
+						b.add(GFORMAT.text(b.text(), "Maintenance"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) maintenance));
+						b.NL();
+
+						b.add(GFORMAT.text(b.text(), "Tools"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) tools));
+						b.NL();
+
+						b.add(GFORMAT.text(b.text(), "Profit"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) profit1));
+						b.NL();
+
+						b.add(GFORMAT.text(b.text(), "Profit per employee"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) ppp1));
+						b.NL();
+					}
+				};
 				{
-					RENDEROBJ s = profitTools(get);
+					RENDEROBJ s = profit1_display(get);
 					all.addDownC(2, s);
 				}
+				all.addRelBody(2, DIR.N, new GHeader(Profit1));
 
+				section.addRelBody(4, DIR.S, all);
+			}
+			// #!# Add profit panel 2
+			{
+				GuiSection all = new GuiSection(){
+					/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+					public void hoverInfoGet(GUI_BOX text) {
+						GBox b = (GBox) text;
+						refresh(get);
+
+						b.textLL("Value added by making things for yourself");
+						b.NL();
+
+						b.add(GFORMAT.text(b.text(), "Denari saved by not importing"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) saved));
+						b.NL();
+
+						b.add(GFORMAT.text(b.text(), "Input costs"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) inputs));
+						b.NL();
+
+						b.add(GFORMAT.text(b.text(), "Maintenance"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) maintenance));
+						b.NL();
+
+						b.add(GFORMAT.text(b.text(), "Tools"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) tools));
+						b.NL();
+
+						b.add(GFORMAT.text(b.text(), "Value Added"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) profit2));
+						b.NL();
+
+						b.add(GFORMAT.text(b.text(), "Profit per employee"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) ppp2));
+						b.NL();
+					}
+				};
 				{
-					RENDEROBJ s = profitMaintenance(get);
+					RENDEROBJ s = profit2_display(get);
 					all.addDownC(2, s);
 				}
-
-				{
-					RENDEROBJ s = profitTotal(get);
-					all.addDownC(2, s);
-				}
-
-				{
-					RENDEROBJ s = profitpp(get);
-					all.addDownC(2, s);
-				}
-
-				all.addRelBody(2, DIR.N, new GHeader(Profit));
+				all.addRelBody(2, DIR.N, new GHeader(Profit2));
 
 				section.addRelBody(4, DIR.S, all);
 			}
 
+			// #!# Add profit panel 3
+			{
+				GuiSection all = new GuiSection(){
+					/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+					public void hoverInfoGet(GUI_BOX text) {
+						GBox b = (GBox) text;
+						refresh(get);
+
+						b.textLL("Estimate of actual profit based on 'for self' and 'for sale' weighted average." );
+						b.NL();
+						b.textLL("Assumes you trade for everything this industry doesn't make!");
+						b.NL();
+
+						b.add(GFORMAT.text(b.text(), "Percent of value used for self."));
+						b.tab(7);
+						b.add(GFORMAT.text(b.text(), (int) (percent_for_self*100)+ "%"));
+						b.NL();
+
+						b.add(GFORMAT.text(b.text(), "Weighted average revenue"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) weighted_average));
+						b.NL();
+
+						b.add(GFORMAT.text(b.text(), "Input costs"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) inputs));
+						b.NL();
+
+						b.add(GFORMAT.text(b.text(), "Maintenance"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) maintenance));
+						b.NL();
+
+						b.add(GFORMAT.text(b.text(), "Tools"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) tools));
+						b.NL();
+
+						b.add(GFORMAT.text(b.text(), "Estimated profit"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) profit3));
+						b.NL();
+
+						b.add(GFORMAT.text(b.text(), "Profit per employee"));
+						b.tab(7);
+						b.add(GFORMAT.iIncr(b.text(), (long) ppp3));
+						b.NL();
+					}
+				};
+				{
+					RENDEROBJ s = profit3_display(get);
+					all.addDownC(2, s);
+				}
+				all.addRelBody(2, DIR.N, new GHeader(Profit3));
+
+				section.addRelBody(4, DIR.S, all);
+			}
 			// End of profit panel
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////#!#
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////#!#
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////#!#
 
 			if (ins.size() <= 1)
 				return;
@@ -873,8 +1077,8 @@ final class ModuleIndustry implements ModuleMaker {
 		return s;
 	}
 
-	/////////////////////////////////////////////#!# Profit calculation's output costs
-	private static RENDEROBJ profitOut(GETTER<RoomInstance> get) {
+	//	/////////////////////////////////////////////#!# Profit calculation's output revenue in terms of selling
+		private RENDEROBJ profit1_display(GETTER<RoomInstance> get) {
 		GuiSection s = new GuiSection();
 
 
@@ -882,275 +1086,53 @@ final class ModuleIndustry implements ModuleMaker {
 
 			@Override
 			public void update(GText text) {
-				ROOM_PRODUCER p = ((ROOM_PRODUCER) g(get));
-				double total = 0;
-
-				for (int ri = 0; ri < p.industry().outs().size(); ri++) {
-					IndustryResource i = p.industry().outs().get(ri);
-					double n = i.dayPrev.get(p);
-					double sellFor = FACTIONS.player().trade.pricesSell.get(i.resource);
-					total += n * sellFor;
-				}
-
-				GFORMAT.iIncr(text, (int) total);
+				refresh(get);
+				GFORMAT.iIncr(text, (int) profit1);
 			}
 		}.r();
 
 		s.addRightC(6, h);
 		s.body().incrW(48);
 		s.pad(4);
-		GText t = new GText(UI.FONT().S, "Revenue");
-		t.color(GCOLOR.T().INORMAL);
-		s.addRelBody(2, DIR.N, t);
 		return s;
 	}
-
-	private static RENDEROBJ profitIn(GETTER<RoomInstance> get) {
+//	/////////////////////////////////////////////#!# Profit calculation's output revenue in terms of using it for yourself
+		private RENDEROBJ profit2_display(GETTER<RoomInstance> get) {
 		GuiSection s = new GuiSection();
 
+
 		HOVERABLE h = new GStat() {
 
 			@Override
 			public void update(GText text) {
-				ROOM_PRODUCER p = ((ROOM_PRODUCER) g(get));
-				double total = 0;
-
-				for (int ri = 0; ri < p.industry().ins().size(); ri++) {
-					IndustryResource i = p.industry().ins().get(ri);
-					double n = i.dayPrev.get(p);
-					double sellFor = FACTIONS.player().trade.pricesBuy.get(i.resource);
-					total -= n * sellFor;
-				}
-
-				GFORMAT.iIncr(text, (int) total);
+				refresh(get);
+				GFORMAT.iIncr(text, (int) profit2);
 			}
 		}.r();
 
 		s.addRightC(6, h);
 		s.body().incrW(48);
 		s.pad(4);
-		GText t = new GText(UI.FONT().S, "Input Costs");
-		t.color(GCOLOR.T().INORMAL);
-		s.addRelBody(2, DIR.N, t);
 		return s;
-	}
-	/////////////////////////////////////////////#!# Tool calculation
-	private static RENDEROBJ profitTools(GETTER<RoomInstance> get) {
+		}
+	private RENDEROBJ profit3_display(GETTER<RoomInstance> get) {
 		GuiSection s = new GuiSection();
 
+
 		HOVERABLE h = new GStat() {
 
 			@Override
 			public void update(GText text) {
-				double total = 0;
-				RoomInstance ins = get.get();
-
-
-				if (ins.blueprint().employment() == null) {
-					return;
-				}
-				RoomEmploymentSimple ee = ins.blueprint().employment();
-				RoomEmploymentIns e = ins.employees();
-
-				for (RoomEquip w : ee.tools())
-				{
-					double n = w.degradePerDay * e.tools(w);
-					double sellFor = FACTIONS.player().trade.pricesBuy.get(w.resource);
-					total -= n * sellFor;
-				}
-
-				GFORMAT.iIncr(text, (int) total);
+				refresh(get);
+				GFORMAT.iIncr(text, (int) ppp3);
 			}
 		}.r();
 
 		s.addRightC(6, h);
 		s.body().incrW(48);
 		s.pad(4);
-		GText t = new GText(UI.FONT().S, "Current Tools");
-		t.color(GCOLOR.T().INORMAL);
-		s.addRelBody(2, DIR.N, t);
 		return s;
 	}
-/////////////////////////////////////////////#!# Maintenance calculation
-	private static RENDEROBJ profitMaintenance(GETTER<RoomInstance> get) {
-		GuiSection s = new GuiSection() {
-
-			@Override
-			public void render(SPRITE_RENDERER r, float ds) {
-				visableSet(get.get().blueprintI().degrades());
-				if (visableIs())
-					super.render(r, ds);
-			}
-		};
 
 
-		HOVERABLE h = new GStat() {
-
-			@Override
-			public void update(GText text) {
-				RoomInstance ins = get.get();
-				ROOM_DEGRADER deg = get.get().degrader(get.get().mX(), get.get().mY());
-				double iso = ins.isolation(get.get().mX(), get.get().mY());
-				double boost = SETT.MAINTENANCE().speed();
-
-				double total = 0;
-
-				for (int i = 0; i < deg.resSize(); i++) {
-					if (deg.resAmount(i) <= 0)
-						continue;
-					RESOURCE res = deg.res(i);
-
-					double n = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, deg.resAmount(i))*TIME.years().bitConversion(TIME.days()) / 16.0;
-					double sellFor = FACTIONS.player().trade.pricesBuy.get(res);
-					total -= n * sellFor;
-				}
-
-				GFORMAT.iIncr(text, (int) total);
-			}
-		}.r();
-
-		s.addRightC(6, h);
-		s.body().incrW(48);
-		s.pad(4);
-		GText t = new GText(UI.FONT().S, "Maintenance");
-		t.color(GCOLOR.T().INORMAL);
-		s.addRelBody(2, DIR.N, t);
-		return s;
-	}
-	/////////////////////////////////////////////#!# Profit Total
-	private static RENDEROBJ profitTotal(GETTER<RoomInstance> get) {
-		GuiSection s = new GuiSection();
-
-		HOVERABLE h = new GStat() {
-
-			@Override
-			public void update(GText text) {
-				ROOM_PRODUCER p = ((ROOM_PRODUCER) g(get));
-				double total = 0;
-
-				for (int ri = 0; ri < p.industry().outs().size(); ri++) {
-					IndustryResource i = p.industry().outs().get(ri);
-					double n = i.dayPrev.get(p);
-					double sellFor = FACTIONS.player().trade.pricesSell.get(i.resource);
-					total += n * sellFor;
-				}
-
-				for (int ri = 0; ri < p.industry().ins().size(); ri++) {
-					IndustryResource i = p.industry().ins().get(ri);
-					double n = i.dayPrev.get(p);
-					double sellFor = FACTIONS.player().trade.pricesBuy.get(i.resource);
-					total -= n * sellFor;
-				}
-
-				RoomInstance ins = get.get();
-
-				if (ins.blueprint().employment() != null) {
-					RoomEmploymentSimple ee = ins.blueprint().employment();
-					RoomEmploymentIns e = ins.employees();
-
-					for (RoomEquip w : ee.tools()) {
-						double n = w.degradePerDay * e.tools(w);
-						double sellFor = FACTIONS.player().trade.pricesBuy.get(w.resource);
-						total -= n * sellFor;
-					}
-				}
-
-				if (ins.blueprintI().degrades()) {
-					ROOM_DEGRADER deg = get.get().degrader(get.get().mX(), get.get().mY());
-					double iso = ins.isolation(get.get().mX(), get.get().mY());
-					double boost = SETT.MAINTENANCE().speed();
-
-					for (int i = 0; i < deg.resSize(); i++) {
-						if (deg.resAmount(i) <= 0)
-							continue;
-						RESOURCE res = deg.res(i);
-
-						double n = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, deg.resAmount(i)) * TIME.years().bitConversion(TIME.days()) / 16.0;
-						double sellFor = FACTIONS.player().trade.pricesBuy.get(res);
-						total -= n * sellFor;
-					}
-				}
-
-				GFORMAT.iIncr(text, (int) total);
-			}
-		}.r();
-
-		s.addRightC(6, h);
-		s.body().incrW(48);
-		s.pad(4);
-		GText t = new GText(UI.FONT().S, "Total profit");
-		t.color(GCOLOR.T().INORMAL);
-		s.addRelBody(2, DIR.N, t);
-		return s;
-	}
-	/////////////////////////////////////////////#!# Profit calculation per person
-	private static RENDEROBJ profitpp(GETTER<RoomInstance> get) {
-		GuiSection s = new GuiSection();
-
-		HOVERABLE h = new GStat() {
-
-			@Override
-			public void update(GText text) {
-				ROOM_PRODUCER p = ((ROOM_PRODUCER) g(get));
-				double total = 0;
-
-				for (int ri = 0; ri < p.industry().outs().size(); ri++) {
-					IndustryResource i = p.industry().outs().get(ri);
-					double n = i.dayPrev.get(p);
-					double sellFor = FACTIONS.player().trade.pricesSell.get(i.resource);
-					total += n * sellFor;
-				}
-
-				for (int ri = 0; ri < p.industry().ins().size(); ri++) {
-					IndustryResource i = p.industry().ins().get(ri);
-					double n = i.dayPrev.get(p);
-					double sellFor = FACTIONS.player().trade.pricesBuy.get(i.resource);
-					total -= n * sellFor;
-				}
-
-				RoomInstance ins = get.get();
-
-				if (ins.blueprint().employment() != null) {
-					RoomEmploymentSimple ee = ins.blueprint().employment();
-					RoomEmploymentIns e = ins.employees();
-
-					for (RoomEquip w : ee.tools()) {
-						double n = w.degradePerDay * e.tools(w);
-						double sellFor = FACTIONS.player().trade.pricesBuy.get(w.resource);
-						total -= n * sellFor;
-					}
-				}
-
-				if (ins.blueprintI().degrades()) {
-					ROOM_DEGRADER deg = get.get().degrader(get.get().mX(), get.get().mY());
-					double iso = ins.isolation(get.get().mX(), get.get().mY());
-					double boost = SETT.MAINTENANCE().speed();
-
-					for (int i = 0; i < deg.resSize(); i++) {
-						if (deg.resAmount(i) <= 0)
-							continue;
-						RESOURCE res = deg.res(i);
-
-						double n = ROOM_DEGRADER.rateResource(boost, deg.base(), iso, deg.resAmount(i)) * TIME.years().bitConversion(TIME.days()) / 16.0;
-						double sellFor = FACTIONS.player().trade.pricesBuy.get(res);
-						total -= n * sellFor;
-					}
-				}
-
-				RoomEmploymentIns e = ins.employees();
-				double employedBLD = max(1, e.employed());
-				double ppp = total / employedBLD;
-				GFORMAT.iIncr(text, (int) ppp);
-
-			}
-		}.r();
-
-		s.addRightC(6, h);
-		s.body().incrW(48);
-		s.pad(4);
-		GText t = new GText(UI.FONT().S, "Profit per person");
-		t.color(GCOLOR.T().INORMAL);
-		s.addRelBody(2, DIR.N, t);
-		return s;
-	}
 }
