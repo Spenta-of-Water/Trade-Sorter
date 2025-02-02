@@ -5,33 +5,20 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.example</groupId>
-    <artifactId>extra.info</artifactId>
-    <version>0.3.1</version>
+    <artifactId>trade.sorter</artifactId>
+    <version>0.0.1</version>
 
     <profiles>
         <profile>
             <id>windows</id>
             <properties>
                 <game.mod.directory>${user.home}/AppData/Roaming/songsofsyx/mods</game.mod.directory>
-                <game.install.directory>C:/Emi/Project Fun/Songs of Syx/V67</game.install.directory>
+                <game.install.directory>C:\Program Files (x86)\Steam\steamapps\common\Songs of Syx</game.install.directory>
                 <game.mod.uploader.directory>${user.home}/AppData/Roaming/songsofsyx/mods-uploader</game.mod.uploader.directory>
             </properties>
             <activation>
                 <os>
                     <family>windows</family>
-                </os>
-            </activation>
-        </profile>
-        <profile>
-            <id>linux</id>
-            <properties>
-                <game.mod.directory>${user.home}/.local/share/songsofsyx/mods</game.mod.directory>
-                <game.install.directory>C:/Emi/Project Fun/Songs of Syx/V67</game.install.directory>
-                <game.mod.uploader.directory>${user.home}/.local/share/songsofsyx/mods-uploader</game.mod.uploader.directory>
-            </properties>
-            <activation>
-                <os>
-                    <family>unix</family>
                 </os>
             </activation>
         </profile>
@@ -99,12 +86,12 @@
 
         <!-- These settings will go into the mods _Info.txt file -->
         <mod.version>${project.version}</mod.version>
-        <mod.name>Extra Info</mod.name>
-        <mod.description>Adds multiple UI changes to give more decision-making information.</mod.description>
-        <mod.author>EmiTheWitch and Mialbowy</mod.author>
+        <mod.name>Trade-Sorter</mod.name>
+        <mod.description>Finds you the best diplomatic trade deals ;).</mod.description>
+        <mod.author>Spenta of Water</mod.author>
         <mod.info> </mod.info>
-        <game.version.major>67</game.version.major>
-        <game.version.minor>48</game.version.minor>
+        <game.version.major>68</game.version.major>
+        <game.version.minor>0</game.version.minor>
 
         <!-- Build settings -->
         <game.version.directory>V${game.version.major}</game.version.directory>
