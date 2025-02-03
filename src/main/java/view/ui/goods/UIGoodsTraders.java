@@ -121,7 +121,7 @@ public abstract class UIGoodsTraders extends GuiSection{
 		@Override
 		protected void clickA() {
 			FactionNPC f = facs[ier.get()];
-			if (!DIP.get(f).trades && ROPINIONS.current(f) >= DIP.TRADE().minLoyalty)
+			if (RD.DIST().reachable(f) && !DIP.get(f).trades && ROPINIONS.current(f) >= DIP.TRADE().minLoyalty)
 				VIEW.world().UI.factions.openTrade(f);
 			else
 				VIEW.world().UI.factions.openDip(f);
