@@ -36,8 +36,8 @@ public abstract class UIGoodsTraders extends GuiSection{
 	private static CharSequence ¤¤TradeYes = "¤You have a trade agreement with this faction, and trade is possible.";
 	private static CharSequence ¤¤TradeNo = "¤You do not have a trade agreement with this faction. Trade is not possible.";
 	private static CharSequence ¤¤Click = "¤Click to go to the diplomacy screen for this faction.";
-	private static CharSequence ¤¤AutoTrade = "¤Auto Trade";
-	private static CharSequence ¤¤DiploTrade = "¤Diplo Trade";
+	private static CharSequence AutoTrade = "Auto Trade";
+	private static CharSequence DiploTrade = "Diplo Trade";
 
 
 	static {
@@ -62,9 +62,9 @@ public abstract class UIGoodsTraders extends GuiSection{
 		});
 		CharSequence label;
 		if (isDiploTrade)
-			label = ¤¤DiploTrade;
+			label = DiploTrade;
 		else
-			label = ¤¤AutoTrade;
+			label = AutoTrade;
 		addRelBody(1, DIR.N,new GHeader(label, UI.FONT().S));
 		addRelBody(1, DIR.S, bu.create(hi, false));
 

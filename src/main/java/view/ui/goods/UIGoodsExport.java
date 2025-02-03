@@ -121,9 +121,10 @@ public class UIGoodsExport extends GuiSection{
 				protected void clickA() {
 					FactionNPC f = null;
 					int pp = 0;
-					for (Faction ffi : DIP.traders()) {
-						FactionNPC ff = (FactionNPC) ffi;
-						int p = ff.seller().priceBuyP(res.get());
+					for (FactionNPC ff : FACTIONS.NPCs()) {
+						if(!ff.isActive())
+							continue;
+						int p = TradeManager.valueResource(res.get(), FACTIONS.player(), ff, 1);
 						if (p > 0 && p > pp) {
 							pp = p;
 							f = ff;
